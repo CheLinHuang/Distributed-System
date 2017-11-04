@@ -1,8 +1,5 @@
 import java.io.*;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketTimeoutException;
+import java.net.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Properties;
@@ -20,6 +17,7 @@ public class Daemon {
     static Integer myHashValue;
     static int joinPortNumber;
     static int packetPortNumber;
+    static int filePortNumber;
     static final List<String> neighbors = new ArrayList<>();
     static final Map<String, long[]> membershipList = new HashMap<>();
     static final TreeMap<Integer, String> hashValues = new TreeMap<>();
@@ -43,6 +41,7 @@ public class Daemon {
             hostNames = config.getProperty("hostNames").split(":");
             joinPortNumber = Integer.parseInt(config.getProperty("joinPortNumber"));
             packetPortNumber = Integer.parseInt(config.getProperty("packetPortNumber"));
+            filePortNumber = Integer.parseInt(config.getProperty("filePortNumber"));
             String logPath = config.getProperty("logPath");
 
             // output the configuration setting for double confirmation
@@ -304,9 +303,22 @@ public class Daemon {
                         String srcFileName = cmdParts[1];
                         String tgtFileName = cmdParts[2];
                         // int hashValue = Hash.hashing(tgtFileName, 8);
-                        String fileServer = Hash.getServer(Hash.hashing(tgtFileName, 8));
+                        String fileServer = Hash.getServer(Hash.hashing(tgtFileName, 8)).split("#")[1];
                         System.out.println(fileServer);
 
+                        File file = new File(srcFileName);
+                        if (!file.exists()) {
+                            System.out.println("Local file not exist!");
+                        } else {
+                            Socket socket = new Socket(fileServer, filePortNumber);
+                            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                            out.println("put");
+                            out.println(tgtFileName);
+                            if (in.readLine().equals("Accept")) {
+                                FilesOP.sendFile(file, tgtFileName, socket);
+                            }
+                        }
                         break;
                     case "get":
                         break;
@@ -315,7 +327,8 @@ public class Daemon {
                     case "ls":
                         break;
                     case "store":
-
+                        for (String s : FilesOP.listFiles("../SDFS/"))
+                            System.out.println(s);
                         break;
                     default:
                         System.out.println("Unsupported command!");

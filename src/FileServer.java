@@ -1,36 +1,21 @@
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
 
-public class FileServer {
+public class FileServer extends Thread {
 
-    private final static int bufferSize = 1024;
+    public void run() {
+        boolean listening = true;
 
-    public static void main(String[] args) {
+        try (ServerSocket serverSocket = new ServerSocket(Daemon.filePortNumber)) {
 
-        while (true) {
-            try (
-                    ServerSocket serverSocket = new ServerSocket(11111);
-                    Socket socket = serverSocket.accept();
-                    DataInputStream clientData = new DataInputStream(socket.getInputStream());
-                    // Read filename from clientData.readUTF()
-                    BufferedOutputStream fileOutputStream = new BufferedOutputStream(
-                            new FileOutputStream("../SDFS/" + clientData.readUTF()));
-            ) {
+            System.out.println("SeverSocket created. Port: " + Daemon.filePortNumber);
 
-                long fileSize = clientData.readLong();
-                byte[] buffer = new byte[bufferSize];
-                int bytes;
-                while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(bufferSize, fileSize))) != -1) {
-                    fileOutputStream.write(buffer, 0, bytes);
-                    fileSize -= bytes;
-                }
+            while (listening)
+                new FileServerThread(serverSocket.accept()).start();
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        } catch (IOException e) {
+            System.err.println("Could not listen to port " + Daemon.filePortNumber);
+            System.exit(-1);
         }
     }
 }
