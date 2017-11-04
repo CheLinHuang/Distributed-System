@@ -4,7 +4,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.lang.Math;
 
-public class Routing {
+public class Hash {
     public static void main(String[] args){
 
         try {
@@ -39,6 +39,4 @@ public class Routing {
 
         return (int)hashValue;
     }
-
-    public static void routing(int hashValue, )
 }

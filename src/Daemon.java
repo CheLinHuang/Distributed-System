@@ -14,11 +14,12 @@ import java.util.concurrent.Executors;
 public class Daemon {
 
     static String ID;
+    static Integer myHashValue;
     static int joinPortNumber;
     static int packetPortNumber;
     static final Set<String> neighbors = new HashSet<>();
     static final TreeMap<String, long[]> membershipList = new TreeMap<>();
-    static final TreeMap<int, String> 
+    static final TreeMap<Integer, String> hashValues = new TreeMap<>();
     private static PrintWriter fileOutput;
     private String[] hostNames;
 
@@ -54,7 +55,7 @@ public class Daemon {
             // assign daemon process an ID: the IP address
             ID = LocalDateTime.now().toString() + "#" +
                     InetAddress.getLocalHost().toString().split("/")[1];
-
+            myHashValue = Integer.valueOf(Hash.hashing(ID, 8));
             // assign appropriate log file path
             File outputDir = new File(logPath);
             if (!outputDir.exists())
@@ -71,34 +72,35 @@ public class Daemon {
         synchronized (membershipList) {
             synchronized (neighbors) {
                 neighbors.clear();
+
+                Integer currentHash = myHashValue;
                 // get the predecessors
-                String currentKey = ID;
                 for (int i = 0; i < 2; i++) {
-                    currentKey = membershipList.lowerKey(currentKey);
+                    currentHash = hashValues.lowerKey(currentHash);
                     // since we are maintaining a virtual ring, if lower key is null,
                     // it means that we are at the end of the list
-                    if (currentKey == null) {
-                        currentKey = membershipList.lastKey();
+                    if (currentHash == null) {
+                        currentHash = hashValues.lastKey();
                     }
-                    if (!currentKey.equals(ID)) {
+                    if (currentHash != myHashValue) {
                         try {
-                            neighbors.add(currentKey);
+                            neighbors.add(hashValues.get(currentHash));
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
                 }
                 // get the successors
-                currentKey = ID;
+                currentHash = myHashValue;
                 for (int i = 0; i < 2; i++) {
-                    currentKey = membershipList.higherKey(currentKey);
-                    if (currentKey == null) {
-                        currentKey = membershipList.firstKey();
+                    currentHash = hashValues.higherKey(currentHash);
+                    if (currentHash == null) {
+                        currentHash = hashValues.firstKey();
                     }
 
-                    if (!currentKey.equals(ID)) {
+                    if (currentHash != myHashValue) {
                         try {
-                            neighbors.add(currentKey);
+                            neighbors.add(hashValues.get(currentHash));
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -155,6 +157,7 @@ public class Daemon {
                 String[] memberDetail = member.split("/");
                 long[] memberStatus = {Long.parseLong(memberDetail[1]), System.currentTimeMillis()};
                 membershipList.put(memberDetail[0], memberStatus);
+                hashValues.put(Hash.hashing(memberDetail[0], 8), memberDetail[0]);
             }
 
             writeLog("JOIN!", ID);
@@ -173,6 +176,7 @@ public class Daemon {
                 // put the process itself to the membership list
                 long[] memberStatus = {0, System.currentTimeMillis()};
                 membershipList.put(ID, memberStatus);
+                hashValues.put(Hash.hashing(ID, 8), ID);
                 writeLog("JOIN", ID);
             }
 
@@ -285,8 +289,7 @@ public class Daemon {
                         }
                         String srcFileName = cmdParts[1];
                         String tgtFileName = cmdParts[2];
-                        int hashValue = Routing.hashing(tgtFileName, 8);
-
+                        int hashValue = Hash.hashing(tgtFileName, 8);
 
                         break;
                     case "get":

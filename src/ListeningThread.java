@@ -32,6 +32,7 @@ public class ListeningThread extends Thread {
                     if (values == null) {
                         Protocol.sendGossip(ID, "Add", counter, 3, 4, sendSocket);
                         Daemon.writeLog("REJOIN", ID);
+                        Daemon.hashValues.put(Hash.hashing(ID, 8), ID);
                         Daemon.updateNeighbors();
                     }
                     break;
@@ -40,6 +41,7 @@ public class ListeningThread extends Thread {
                     if ((values == null) || (counter > values[0])) {
                         Daemon.membershipList.put(ID, new long[]{counter, System.currentTimeMillis()});
                         if (values == null) {
+                            Daemon.hashValues.put(Hash.hashing(ID, 8), ID);
                             Daemon.updateNeighbors();
                             Daemon.writeLog("ADD", ID);
                         }
@@ -49,6 +51,7 @@ public class ListeningThread extends Thread {
                 case "Remove":
                     if ((values != null) && (counter > values[0])) {
                         Daemon.membershipList.remove(ID);
+                        Daemon.hashValues.remove(Hash.hashing(ID, 8));
                         Daemon.updateNeighbors();
                         Daemon.writeLog("REMOVE", ID);
                     }
@@ -57,6 +60,7 @@ public class ListeningThread extends Thread {
                 case "Leave":
                     if (values != null) {
                         Daemon.membershipList.remove(ID);
+                        Daemon.hashValues.put(Hash.hashing(ID, 8), ID);
                         Daemon.updateNeighbors();
                         Daemon.writeLog("REMOVE", ID);
                     }

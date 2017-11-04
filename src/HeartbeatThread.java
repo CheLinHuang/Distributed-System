@@ -30,6 +30,7 @@ public class HeartbeatThread extends Thread {
                 Thread.sleep(period);
                 synchronized (Daemon.membershipList) {
                     Protocol.sendHeartBeat(Daemon.ID, counter++, sendSocket);
+                    // update the counter and the timestamp
                     Daemon.membershipList.put(Daemon.ID, new long[]{counter, System.currentTimeMillis()});
                 }
 

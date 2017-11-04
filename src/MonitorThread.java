@@ -42,6 +42,7 @@ public class MonitorThread extends Thread {
                             timeoutID.add(key);
                             timeoutCounter.add(Daemon.membershipList.get(key)[0]);
                             Daemon.membershipList.remove(key);
+                            Daemon.hashValues.remove(Hash.hashing(key, 8));
                             Daemon.writeLog("FAILURE", key);
                             update = true;
 
