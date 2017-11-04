@@ -39,6 +39,7 @@ public class IntroducerThread extends Thread {
                 // assign status and add to the membership list
                 long[] status = {0, System.currentTimeMillis()};
                 Daemon.membershipList.put(joinID, status);
+                Daemon.hashValues.put(Hash.hashing(joinID, 8), joinID);
 
                 // build the whole membership list string
                 StringBuilder sb = new StringBuilder();

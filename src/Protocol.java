@@ -21,7 +21,7 @@ public class Protocol {
             targets.add(i);
         }
         Collections.shuffle(targets);
-        Object[] IDArray = Daemon.membershipList.navigableKeySet().toArray();
+        Object[] IDArray = Daemon.membershipList.keySet().toArray();
         for (int i = 0; i < Math.min(size, numOfTarget); i++) {
             String target = ((String) IDArray[targets.get(i)]).split("#")[1];
             try {

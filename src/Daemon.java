@@ -8,8 +8,11 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.*;
 
 public class Daemon {
 
@@ -17,8 +20,8 @@ public class Daemon {
     static Integer myHashValue;
     static int joinPortNumber;
     static int packetPortNumber;
-    static final Set<String> neighbors = new HashSet<>();
-    static final TreeMap<String, long[]> membershipList = new TreeMap<>();
+    static final List<String> neighbors = new ArrayList<>();
+    static final Map<String, long[]> membershipList = new HashMap<>();
     static final TreeMap<Integer, String> hashValues = new TreeMap<>();
     private static PrintWriter fileOutput;
     private String[] hostNames;
@@ -82,7 +85,7 @@ public class Daemon {
                     if (currentHash == null) {
                         currentHash = hashValues.lastKey();
                     }
-                    if (currentHash != myHashValue) {
+                    if (!currentHash.equals(myHashValue) && !neighbors.contains(hashValues.get(currentHash))) {
                         try {
                             neighbors.add(hashValues.get(currentHash));
                         } catch (Exception e) {
@@ -98,7 +101,7 @@ public class Daemon {
                         currentHash = hashValues.firstKey();
                     }
 
-                    if (currentHash != myHashValue) {
+                    if (!currentHash.equals(myHashValue) && !neighbors.contains(hashValues.get(currentHash))) {
                         try {
                             neighbors.add(hashValues.get(currentHash));
                         } catch (Exception e) {
@@ -107,10 +110,16 @@ public class Daemon {
                     }
                 }
 
+                System.out.println("print neighbors......");
+                for (String neighbor : neighbors) {
+                    System.out.println(neighbor);
+                }
+
                 // Update timestamp for non-neighbor
                 for (String neighbor : neighbors) {
                     long[] memberStatus = {membershipList.get(neighbor)[0], System.currentTimeMillis()};
                     membershipList.put(neighbor, memberStatus);
+
                 }
             }
         }
@@ -150,6 +159,7 @@ public class Daemon {
             clientSocket.setSoTimeout(2000);
             clientSocket.receive(receivePacket);
             String response = new String(receivePacket.getData(), 0, receivePacket.getLength());
+            System.out.println(response);
 
             // process the membership list that the first introducer response and ignore the rest
             String[] members = response.split("%");
@@ -261,8 +271,12 @@ public class Daemon {
                     case "member":
                         System.out.println("===============================");
                         System.out.println("Membership List:");
-                        for (String key : membershipList.keySet()) {
-                            System.out.println(key);
+                        int size = hashValues.size();
+                        Integer[] keySet = new Integer[size];
+                        hashValues.navigableKeySet().toArray(keySet);
+
+                        for (Integer key: keySet) {
+                            System.out.println(hashValues.get(key));
                         }
                         System.out.println("===============================");
                         break;
@@ -289,7 +303,9 @@ public class Daemon {
                         }
                         String srcFileName = cmdParts[1];
                         String tgtFileName = cmdParts[2];
-                        int hashValue = Hash.hashing(tgtFileName, 8);
+                        // int hashValue = Hash.hashing(tgtFileName, 8);
+                        String fileServer = Hash.getServer(Hash.hashing(tgtFileName, 8));
+                        System.out.println(fileServer);
 
                         break;
                     case "get":
@@ -305,7 +321,7 @@ public class Daemon {
                         System.out.println("Unsupported command!");
                         displayPrompt();
                 }
-                displayPrompt();
+                // displayPrompt();
             }
 
         } catch (IOException e) {

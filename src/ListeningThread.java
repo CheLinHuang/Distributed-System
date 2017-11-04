@@ -60,7 +60,7 @@ public class ListeningThread extends Thread {
                 case "Leave":
                     if (values != null) {
                         Daemon.membershipList.remove(ID);
-                        Daemon.hashValues.put(Hash.hashing(ID, 8), ID);
+                        Daemon.hashValues.remove(Hash.hashing(ID, 8), ID);
                         Daemon.updateNeighbors();
                         Daemon.writeLog("REMOVE", ID);
                     }
