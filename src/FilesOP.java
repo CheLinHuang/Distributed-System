@@ -58,26 +58,22 @@ public class FilesOP {
         @Override
         public void run() {
 
-            // Support file < 2GB with int casting
-            byte[] byteArray = new byte[(int) file.length()];
-
+            byte[] buffer = new byte[4096];
             System.out.println("File size: " + file.length());
 
             //Send file
             try (
                     DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-                    DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-                    // BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))
+                    DataOutputStream dos = new DataOutputStream(socket.getOutputStream())
             ) {
 
-                //Sending file name and file size to the server
-                dis.readFully(byteArray);
-                //dos.writeUTF(fileName);
-                dos.writeLong(byteArray.length);
+                //Sending file size to the server
+                dos.writeLong(file.length());
 
                 //Sending file data to the server
-                dos.write(byteArray);
-                dos.flush();
+                int read;
+                while ((read = dis.read(buffer)) > 0)
+                    dos.write(buffer, 0, read);
 
             } catch (Exception e) {
                 e.printStackTrace();
