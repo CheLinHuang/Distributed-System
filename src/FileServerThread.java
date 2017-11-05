@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 public class FileServerThread extends Thread {
 
     Socket socket;
+    int numOfReplica = 3;
 
     public FileServerThread(Socket socket) {
         this.socket = socket;
@@ -28,6 +29,8 @@ public class FileServerThread extends Thread {
 
             switch (operation) {
                 case "put": {
+
+                    int count = 0;
                     // Read filename from clientData.readUTF()
                     String sdfsfilename = clientData.readUTF();
 
@@ -59,36 +62,52 @@ public class FileServerThread extends Thread {
                     fileOutputStream.close();
 
                     File file = new File("../SDFS/" + sdfsfilename);
-
+                    count ++;
                     Daemon.writeLog("receive file size", Long.toString(file.length()));
-
-                    // TODO confirmation
-                    //if (file.length() == fileSize) {
-                        //out.println("Received");
-                        System.out.println("File received");
-                        System.out.println("File name:" + sdfsfilename);
-
-                    /*} else {
-                        System.out.println("Fail to receive file");
-                        out.writeUTF("Resend");
-                        FilesOP.deleteFile(sdfsfilename);
-                    }
-*/
-
 
                     // TODO send replica
                     int index = Daemon.neighbors.size() - 1;
+                    //ExecutorService mPool = Executors.newFixedThreadPool(2);
+                    List<Socket> replicaSockets = new ArrayList<>();
+                    Thread[] threads = new Thread[2];
+                    //boolean[][] isDone = {{false}, {false}};
+
                     for (int i = 0; index >= 0 && i < 2; i++) {
                         Socket replicaSocket = new Socket(Daemon.neighbors.get(index).split("#")[1], Daemon.filePortNumber);
                         DataOutputStream outPrint = new DataOutputStream(replicaSocket.getOutputStream());
+                        replicaSockets.add(replicaSocket);
                         outPrint.writeUTF("replica");
                         outPrint.writeUTF(sdfsfilename);
-                        ExecutorService mPool = Executors.newFixedThreadPool(2);
-                        mPool.execute(FilesOP.sendFile(file, "../SDFS/" + sdfsfilename, replicaSocket));
+                        threads[i] = FilesOP.sendFile(file, "../SDFS/" + sdfsfilename, replicaSocket);
+                        threads[i].start();
                         index--;
                     }
 
-                    //out.writeUTF("Put Success");
+                    /*
+                    for (Socket replicaSocket: replicaSockets) {
+                        // socket closed
+                        DataInputStream response = new DataInputStream(replicaSocket.getInputStream());
+                        String res = response.readUTF();
+                        if (res.equals("Received")) {
+                            count ++;
+                            if (count > numOfReplica / 2) {
+                                out.writeUTF("Done");
+                                break;
+                            }
+                        }
+                    }*/
+
+                    for (Thread t : threads)
+                        if (t != null) {
+                            t.join();
+                            count++;
+                            // quorum write
+                            if (count >= numOfReplica / 2 || count == Daemon.membershipList.size()) {
+                                out.writeUTF("Received");
+                            }
+                        }
+
+
                     break;
                 }
                 case "replica": {
@@ -109,20 +128,11 @@ public class FileServerThread extends Thread {
                     fileOutputStream.close();
 
                     File file = new File("../SDFS/" + sdfsfilename);
+                    out.writeUTF("Received");
                     Daemon.writeLog("receive file size", Long.toString(file.length()));
-                    /*if (file.length() == fileSize) {
-                        out.writeUTF("Replica Received");
-                    */
                     System.out.println("Replica File received");
-                        System.out.println("Replica File name:" + sdfsfilename);
-/*
-                    } else {
-                        System.out.println("Fail to receive file");
-                        out.writeUTF("Resend");
-                        FilesOP.deleteFile(sdfsfilename);
-                    }
-*/
-                    fileOutputStream.close();
+                    System.out.println("Replica File name:" + sdfsfilename);
+
                     break;
                 }
                 case "fail replica": {
@@ -142,6 +152,7 @@ public class FileServerThread extends Thread {
                             fileSize -= bytes;
                         }
                         fileOutputStream.close();
+                        out.writeUTF("Received");
                         Daemon.writeLog("Receive Replica", "");
 
                     } else {
@@ -259,6 +270,7 @@ public class FileServerThread extends Thread {
                                 t.join();
                             }
                         }
+                        out.writeUTF("Empty");
                     }
                 }
             }
