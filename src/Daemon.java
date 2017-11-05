@@ -350,34 +350,8 @@ public class Daemon {
                         fileOutput.close();
                         System.exit(0);
 
-                    case "put": {
-                        if (cmdParts.length != 3) {
-                            System.out.println("Unsupported command format!");
-                            System.out.println("To put a file into the SDFS");
-                            System.out.println("Please enter \"put localfilename sdfsfilename\"");
-                            break;
-                        }
-                        String srcFileName = cmdParts[1];
-                        String tgtFileName = cmdParts[2];
-                        // int hashValue = Hash.hashing(tgtFileName, 8);
-                        String fileServer = Hash.getServer(Hash.hashing(tgtFileName, 8)).split("#")[1];
-                        System.out.println("Send file to " + fileServer);
-
-                        File file = new File(srcFileName);
-                        if (!file.exists()) {
-                            System.out.println("Local file not exist!");
-                        } else {
-                            Socket socket = new Socket(fileServer, filePortNumber);
-                            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-                            DataInputStream in = new DataInputStream(socket.getInputStream());
-                            dos.writeUTF("put");
-                            dos.writeUTF(tgtFileName);
-                            String response = in.readUTF();
-                            System.out.println("Server response " + response);
-                            if (response.equals("Accept")) {
-                                FilesOP.sendFile(file, tgtFileName, socket);
-                            }
-                        }
+                    case "put":
+                        userCommand.putFile(cmdParts, filePortNumber);
                         break;
                     }
                     case "get": {
