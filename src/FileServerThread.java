@@ -243,6 +243,23 @@ public class FileServerThread extends Thread {
                     } else {
                         out.writeUTF("Empty");
                     }
+                    break;
+                }
+                case "get replica": {
+                    String targetNode = clientData.readUTF();
+                    List<String> fileList = FilesOP.listFiles("../SDFS/");
+                    if (fileList.size() == 0) {
+                        out.writeUTF("Empty");
+                    } else {
+                        for (String file : fileList) {
+                            if (targetNode.equals(Hash.getServer(Hash.hashing(file, 8)))) {
+                                out.writeUTF(file);
+                                Thread t = FilesOP.sendFile(new File("../SDFS/" + file), file, socket);
+                                t.start();
+                                t.join();
+                            }
+                        }
+                    }
                 }
             }
 
