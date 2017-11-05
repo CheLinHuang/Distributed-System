@@ -64,7 +64,6 @@ public class FilesOP {
             //Send file
             try (
                     DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-                    DataOutputStream dos = new DataOutputStream(socket.getOutputStream())
                     DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
                     DataInputStream sktResponse = new DataInputStream(socket.getInputStream())
             ) {

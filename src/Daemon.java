@@ -1,15 +1,9 @@
 import java.io.*;
 import java.net.*;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.*;
 
 public class Daemon {
 
@@ -143,13 +137,14 @@ public class Daemon {
             }
         }
     }
+
     public static void moveReplica(boolean isNewNode) {
 
         if (isNewNode) {
             // For newly-added node, it is possible that
             System.out.println("New added node!");
             int j = neighbors.size() - 1;
-            while (j >= Math.max(0, neighbors.size()-2)) {
+            while (j >= Math.max(0, neighbors.size() - 2)) {
                 String tgtHostName = neighbors.get(j--).split("#")[1];
                 try {
                     Socket socket = new Socket(tgtHostName, filePortNumber);
@@ -218,7 +213,7 @@ public class Daemon {
                             e.printStackTrace();
                         }
                     }
-                    for (Thread t: threads) {
+                    for (Thread t : threads) {
                         try {
                             t.join();
                         } catch (Exception e) {
@@ -413,7 +408,7 @@ public class Daemon {
                         Integer[] keySet = new Integer[size];
                         hashValues.navigableKeySet().toArray(keySet);
 
-                        for (Integer key: keySet) {
+                        for (Integer key : keySet) {
                             System.out.println(hashValues.get(key));
                         }
                         System.out.println("===============================");

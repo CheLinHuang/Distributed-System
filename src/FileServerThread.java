@@ -62,7 +62,7 @@ public class FileServerThread extends Thread {
                     fileOutputStream.close();
 
                     File file = new File("../SDFS/" + sdfsfilename);
-                    count ++;
+                    count++;
                     Daemon.writeLog("receive file size", Long.toString(file.length()));
 
                     // TODO send replica
