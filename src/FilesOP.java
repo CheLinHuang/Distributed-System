@@ -72,7 +72,7 @@ public class FilesOP {
 
                 //Sending file name and file size to the server
                 dis.readFully(byteArray);
-                dos.writeUTF(fileName);
+                //dos.writeUTF(fileName);
                 dos.writeLong(byteArray.length);
 
                 //Sending file data to the server

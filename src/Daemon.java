@@ -126,6 +126,9 @@ public class Daemon {
 
     public void joinGroup(boolean isIntroducer) {
 
+        for (String s : FilesOP.listFiles("../SDFS/"))
+            FilesOP.deleteFile("../SDFS/" + s);
+
         DatagramSocket clientSocket = null;
 
         // try until socket create correctly
@@ -257,10 +260,12 @@ public class Daemon {
                         // to deal with the case that users enter "JOIN" command multiple times
                         if (membershipList.size() == 0) {
                             daemon.joinGroup(isIntroducer);
-                            ExecutorService mPool = Executors.newFixedThreadPool(3 + ((isIntroducer) ? 1 : 0));
+                            ExecutorService mPool = Executors.newFixedThreadPool(4 + ((isIntroducer) ? 1 : 0));
                             if (isIntroducer) {
                                 mPool.execute(new IntroducerThread());
                             }
+
+                            mPool.execute(new FileServer());
                             mPool.execute(new ListeningThread());
                             mPool.execute(new HeartbeatThread(900));
                             mPool.execute(new MonitorThread());
@@ -304,18 +309,20 @@ public class Daemon {
                         String tgtFileName = cmdParts[2];
                         // int hashValue = Hash.hashing(tgtFileName, 8);
                         String fileServer = Hash.getServer(Hash.hashing(tgtFileName, 8)).split("#")[1];
-                        System.out.println(fileServer);
+                        System.out.println("Send file to " + fileServer);
 
                         File file = new File(srcFileName);
                         if (!file.exists()) {
                             System.out.println("Local file not exist!");
                         } else {
                             Socket socket = new Socket(fileServer, filePortNumber);
-                            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                            out.println("put");
-                            out.println(tgtFileName);
-                            if (in.readLine().equals("Accept")) {
+                            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+                            DataInputStream in = new DataInputStream(socket.getInputStream());
+                            dos.writeUTF("put");
+                            dos.writeUTF(tgtFileName);
+                            String response = in.readUTF();
+                            System.out.println("Server response " + response);
+                            if (response.equals("Accept")) {
                                 FilesOP.sendFile(file, tgtFileName, socket);
                             }
                         }
