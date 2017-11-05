@@ -1,5 +1,5 @@
-import java.net.Socket;
 import java.io.*;
+import java.net.Socket;
 
 public class userCommand {
 
@@ -30,7 +30,7 @@ public class userCommand {
                 String response = in.readUTF();
                 System.out.println("Server response " + response);
                 if (response.equals("Accept")) {
-                    FilesOP.sendFile(file, tgtFileName, socket);
+                    FilesOP.sendFile(file, tgtFileName, socket).start();
                 } else if (response.equals("Confirm")) {
 
                     System.out.println("Are you sure to send the file? (y/n)");
@@ -50,7 +50,7 @@ public class userCommand {
                             String cmd = StdIn.readLine().toLowerCase();
                             switch (cmd) {
                                 case "y":
-                                    FilesOP.sendFile(file, tgtFileName, socket);
+                                    FilesOP.sendFile(file, tgtFileName, socket).start();
                                     repeat = false;
                                     break;
                                 case "n":

@@ -111,7 +111,7 @@ public class Daemon {
                         }
                     }
                 }
-
+/*
                 boolean updated = false;
                 if (oldNeighbors.size() != neighbors.size()) {
                     updated = true;
@@ -172,7 +172,7 @@ public class Daemon {
                         }*/
                     }
                 }
-
+*/
                 System.out.println("print neighbors......");
                 for (String neighbor : neighbors) {
                     System.out.println(neighbor);

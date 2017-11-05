@@ -38,15 +38,13 @@ public class FilesOP {
         return file.delete();
     }
 
-    public static boolean sendFile(File file, String fileName, Socket socket) {
+    public static Thread sendFile(File file, String fileName, Socket socket) {
 
-        Thread SendFileThread = new SendFileThread(file, socket, fileName);
-        SendFileThread.start();
         System.out.println("Called File Thread");
-        return true;
+        return new SendFileThread(file, socket, fileName);
     }
 
-    private static class SendFileThread extends Thread {
+    static class SendFileThread extends Thread {
         File file;
         Socket socket;
         String fileName;
@@ -62,6 +60,8 @@ public class FilesOP {
 
             // Support file < 2GB with int casting
             byte[] byteArray = new byte[(int) file.length()];
+
+            System.out.println("File size: " + file.length());
 
             //Send file
             try (
