@@ -3,6 +3,8 @@ import java.net.Socket;
 import java.util.*;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class FileServerThread extends Thread {
 
@@ -34,8 +36,15 @@ public class FileServerThread extends Thread {
 
                     System.out.println("sdfsfilename: " + sdfsfilename);
 
-                    // TODO check time stamp
-                    out.writeUTF("Accept");
+                    File sdfsfile = new File("../SDFS/" + sdfsfilename);
+                    if (sdfsfile.exists() && System.currentTimeMillis() - sdfsfile.lastModified() < 60000) {
+                        out.writeUTF("Confirm");
+                        String clientConfirmation = clientData.readUTF();
+                        if (clientConfirmation.equals("N"))
+                            break;
+                    } else {
+                        out.writeUTF("Accept");
+                    }
 
                     BufferedOutputStream fileOutputStream = new BufferedOutputStream(
                             new FileOutputStream("../SDFS/" + sdfsfilename));
@@ -73,7 +82,8 @@ public class FileServerThread extends Thread {
                         DataOutputStream outPrint = new DataOutputStream(replicaSocket.getOutputStream());
                         outPrint.writeUTF("replica");
                         outPrint.writeUTF(sdfsfilename);
-                        FilesOP.sendFile(file, "../SDFS/" + sdfsfilename, replicaSocket);
+                        ExecutorService mPool = Executors.newFixedThreadPool(2);
+                        mPool.execute(FilesOP.sendFile(file, "../SDFS/" + sdfsfilename, replicaSocket));
                         index--;
                     }
 
@@ -135,14 +145,15 @@ public class FileServerThread extends Thread {
                 }
                 case "get": {
                     String sdfsfilename = clientData.readUTF();
-                    String localfilename = clientData.readUTF();
 
                     File file = new File("../SDFS/" + sdfsfilename);
                     if (!file.exists()) {
                         out.writeUTF("File Not Exist");
                     } else {
                         out.writeUTF("File Exist");
-                        FilesOP.sendFile(file, localfilename, socket);
+                        Thread t = FilesOP.sendFile(file, sdfsfilename, socket);
+                        t.start();
+                        t.join();
                     }
                     break;
                 }
