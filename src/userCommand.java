@@ -72,6 +72,22 @@ public class userCommand {
         }
     }
 
-    //public
+    public static void listFile(String sdfsFileName, int filePortNumber) {
+        String fileServer = Hash.getServer(Hash.hashing(sdfsFileName, 8)).split("#")[1];
+        try {
+            Socket socket = new Socket(fileServer, filePortNumber);
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            DataInputStream in = new DataInputStream(socket.getInputStream());
+            out.writeUTF("ls");
+            out.writeUTF(sdfsFileName);
+
+            socket.setSoTimeout(2000);
+            String response = in.readUTF(); 
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
 }
