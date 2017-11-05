@@ -12,8 +12,6 @@ public class FileServerThread extends Thread {
         this.socket = socket;
     }
 
-    private final static int bufferSize = 1024;
-
     @Override
     public void run() {
 
@@ -44,9 +42,9 @@ public class FileServerThread extends Thread {
 
                     long fileSize = clientData.readLong();
                     System.out.println("Ture file size:" + fileSize);
-                    byte[] buffer = new byte[bufferSize];
+                    byte[] buffer = new byte[Daemon.bufferSize];
                     int bytes;
-                    while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(bufferSize, fileSize))) != -1) {
+                    while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(Daemon.bufferSize, fileSize))) != -1) {
                         fileOutputStream.write(buffer, 0, bytes);
                         fileSize -= bytes;
                     }
@@ -89,9 +87,9 @@ public class FileServerThread extends Thread {
                             new FileOutputStream("../SDFS/" + sdfsfilename));
 
                     long fileSize = clientData.readLong();
-                    byte[] buffer = new byte[bufferSize];
+                    byte[] buffer = new byte[Daemon.bufferSize];
                     int bytes;
-                    while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(bufferSize, fileSize))) != -1) {
+                    while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(Daemon.bufferSize, fileSize))) != -1) {
                         fileOutputStream.write(buffer, 0, bytes);
                         fileSize -= bytes;
                     }
@@ -122,9 +120,9 @@ public class FileServerThread extends Thread {
                                 new FileOutputStream("../SDFS/" + sdfsfilename));
 
                         long fileSize = clientData.readLong();
-                        byte[] buffer = new byte[bufferSize];
+                        byte[] buffer = new byte[Daemon.bufferSize];
                         int bytes;
-                        while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(bufferSize, fileSize))) != -1) {
+                        while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(Daemon.bufferSize, fileSize))) != -1) {
                             fileOutputStream.write(buffer, 0, bytes);
                             fileSize -= bytes;
                         }
