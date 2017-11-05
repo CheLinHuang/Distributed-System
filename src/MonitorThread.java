@@ -47,7 +47,7 @@ public class MonitorThread extends Thread {
                             update = true;
 
                         } else {
-                            Daemon.writeLog("PASS", key);
+                            //Daemon.writeLog("PASS", key);
                         }
                     }
                 }

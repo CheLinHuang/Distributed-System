@@ -17,24 +17,21 @@ public class FileServerThread extends Thread {
     @Override
     public void run() {
 
-        //while (true) {
         try (
                 DataOutputStream out = new DataOutputStream(socket.getOutputStream());
                 DataInputStream clientData = new DataInputStream(socket.getInputStream())
         ) {
 
-            System.out.println("FileServerThread established");
-
+            Daemon.writeLog("FileServerThread established", socket.getRemoteSocketAddress().toString());
             String operation = clientData.readUTF();
-
-            System.out.println("Operation: " + operation);
+            Daemon.writeLog(operation + " request", socket.getRemoteSocketAddress().toString());
 
             switch (operation) {
                 case "put": {
                     // Read filename from clientData.readUTF()
                     String sdfsfilename = clientData.readUTF();
 
-                    System.out.println("sdfsfilename: " + sdfsfilename);
+                    Daemon.writeLog(sdfsfilename, "");
 
                     File sdfsfile = new File("../SDFS/" + sdfsfilename);
                     if (sdfsfile.exists() && System.currentTimeMillis() - sdfsfile.lastModified() < 60000) {
@@ -50,18 +47,22 @@ public class FileServerThread extends Thread {
                             new FileOutputStream("../SDFS/" + sdfsfilename));
 
                     long fileSize = clientData.readLong();
-                    System.out.println("Ture file size:" + fileSize);
+
+                    Daemon.writeLog("file size", Long.toString(fileSize));
+
                     byte[] buffer = new byte[Daemon.bufferSize];
                     int bytes;
                     while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(Daemon.bufferSize, fileSize))) != -1) {
                         fileOutputStream.write(buffer, 0, bytes);
                         fileSize -= bytes;
                     }
-                    fileOutputStream.flush();
                     fileOutputStream.close();
 
                     File file = new File("../SDFS/" + sdfsfilename);
-                    System.out.println("Actual file size:" + file.length());
+
+                    Daemon.writeLog("receive file size", Long.toString(file.length()));
+
+                    // TODO confirmation
                     //if (file.length() == fileSize) {
                         //out.println("Received");
                         System.out.println("File received");
@@ -92,20 +93,23 @@ public class FileServerThread extends Thread {
                 }
                 case "replica": {
                     String sdfsfilename = clientData.readUTF();
+                    Daemon.writeLog(sdfsfilename, "");
 
                     BufferedOutputStream fileOutputStream = new BufferedOutputStream(
                             new FileOutputStream("../SDFS/" + sdfsfilename));
 
                     long fileSize = clientData.readLong();
+                    Daemon.writeLog("file size", Long.toString(fileSize));
                     byte[] buffer = new byte[Daemon.bufferSize];
                     int bytes;
                     while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(Daemon.bufferSize, fileSize))) != -1) {
                         fileOutputStream.write(buffer, 0, bytes);
                         fileSize -= bytes;
                     }
-                    fileOutputStream.flush();
+                    fileOutputStream.close();
 
                     File file = new File("../SDFS/" + sdfsfilename);
+                    Daemon.writeLog("receive file size", Long.toString(file.length()));
                     /*if (file.length() == fileSize) {
                         out.writeUTF("Replica Received");
                     */
@@ -123,6 +127,7 @@ public class FileServerThread extends Thread {
                 }
                 case "fail replica": {
                     String sdfsfilename = clientData.readUTF();
+                    Daemon.writeLog(sdfsfilename, "");
 
                     if (!new File("../SDFS/" + sdfsfilename).exists()) {
                         out.writeUTF("Ready to receive");
@@ -136,20 +141,25 @@ public class FileServerThread extends Thread {
                             fileOutputStream.write(buffer, 0, bytes);
                             fileSize -= bytes;
                         }
-
                         fileOutputStream.close();
+                        Daemon.writeLog("Receive Replica", "");
+
                     } else {
+                        Daemon.writeLog("Replica Exist", "");
                         out.writeUTF("Replica Exist");
                     }
                     break;
                 }
                 case "get": {
                     String sdfsfilename = clientData.readUTF();
+                    Daemon.writeLog(sdfsfilename, "");
 
                     File file = new File("../SDFS/" + sdfsfilename);
                     if (!file.exists()) {
+                        Daemon.writeLog("File Not Exist", "");
                         out.writeUTF("File Not Exist");
                     } else {
+                        Daemon.writeLog("File Exist", "");
                         out.writeUTF("File Exist");
                         Thread t = FilesOP.sendFile(file, sdfsfilename, socket);
                         t.start();
@@ -159,6 +169,8 @@ public class FileServerThread extends Thread {
                 }
                 case "delete": {
                     String sdfsfilename = clientData.readUTF();
+                    Daemon.writeLog(sdfsfilename, "");
+
                     FilesOP.deleteFile("../SDFS/" + sdfsfilename);
 
                     // TODO delete replica
@@ -177,12 +189,15 @@ public class FileServerThread extends Thread {
                 }
                 case "delete replica": {
                     String sdfsfilename = clientData.readUTF();
+                    Daemon.writeLog(sdfsfilename, "");
                     FilesOP.deleteFile("../SDFS/" + sdfsfilename);
                     break;
                 }
                 case "ls": {
                     String queryResult = "";
                     String sdfsFileName = clientData.readUTF();
+                    Daemon.writeLog(sdfsFileName, "");
+
                     // query the file locally on the coordinator
                     if (new File("../SDFS/" + sdfsFileName).exists()) {
                         queryResult += Daemon.ID.split("#")[1] + "#";
@@ -221,22 +236,19 @@ public class FileServerThread extends Thread {
                 case "ls replica": {
                     // check if the query file exists on the replica node
                     String sdfsFileName = clientData.readUTF();
+                    Daemon.writeLog(sdfsFileName, "");
+
                     if (new File("../SDFS/" + sdfsFileName).exists()) {
                         out.writeUTF(Daemon.ID.split("#")[1]);
                     } else {
                         out.writeUTF("Empty");
                     }
-
                 }
-
             }
 
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
-        //}
     }
 }

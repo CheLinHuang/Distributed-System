@@ -22,7 +22,7 @@ public class Protocol {
         }
         Collections.shuffle(targets);
         Object[] IDArray = Daemon.membershipList.keySet().toArray();
-        for (int i = 0; i < Math.min(size, numOfTarget); i++) {
+        for (int i = 0; i < Math.min(IDArray.length, numOfTarget); i++) {
             String target = ((String) IDArray[targets.get(i)]).split("#")[1];
             try {
                 DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length,

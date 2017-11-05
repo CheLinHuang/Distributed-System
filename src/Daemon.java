@@ -23,7 +23,7 @@ public class Daemon {
     static final TreeMap<Integer, String> hashValues = new TreeMap<>();
     private static PrintWriter fileOutput;
     private String[] hostNames;
-    final static int bufferSize = 128;
+    final static int bufferSize = 512;
 
     public Daemon(String configPath) {
 
@@ -57,8 +57,8 @@ public class Daemon {
 
             // assign daemon process an ID: the IP address
             ID = LocalDateTime.now().toString() + "#" +
-                    InetAddress.getLocalHost().toString().split("/")[1];
-            myHashValue = Integer.valueOf(Hash.hashing(ID, 8));
+                    InetAddress.getLocalHost().getHostName();
+            myHashValue = Hash.hashing(ID, 8);
             // assign appropriate log file path
             File outputDir = new File(logPath);
             if (!outputDir.exists())
@@ -154,7 +154,7 @@ public class Daemon {
                                     System.out.println("Return...");
                                     System.out.println(returnMsg);
                                     if (returnMsg != null && returnMsg.equals("Ready to receive")) {
-                                        FilesOP.sendFile(new File("../SDFS/" + file), file, socket);
+                                        FilesOP.sendFile(new File("../SDFS/" + file), file, socket).start();
                                     }
                                 } catch (IOException e) {
                                     e.printStackTrace();
@@ -225,7 +225,6 @@ public class Daemon {
             clientSocket.setSoTimeout(2000);
             clientSocket.receive(receivePacket);
             String response = new String(receivePacket.getData(), 0, receivePacket.getLength());
-            System.out.println(response);
 
             // process the membership list that the first introducer response and ignore the rest
             String[] members = response.split("%");
@@ -268,19 +267,20 @@ public class Daemon {
         System.out.println("Enter \"MEMBER\" to show the membership list");
         System.out.println("Enter \"ID\" to show self's ID");
         System.out.println("Enter \"LEAVE\" to leave the group");
+        System.out.println("===============================");
     }
 
     public static void writeLog(String action, String nodeID) {
 
         // write logs about action happened to the nodeID into log
         fileOutput.println(LocalDateTime.now().toString() + " \"" + action + "\" " + nodeID);
-        if (!action.equals("FAILURE") || !action.equals("MESSAGE") || !action.equals("JOIN")) {
+        /*if (!action.equals("FAILURE") || !action.equals("MESSAGE") || !action.equals("JOIN")) {
             fileOutput.println("Updated Membership List:");
             for (String key : membershipList.keySet()) {
                 fileOutput.println(key);
             }
             fileOutput.println("======================");
-        }
+        }*/
         fileOutput.flush();
     }
 
@@ -323,14 +323,14 @@ public class Daemon {
                     case "join":
                         // to deal with the case that users enter "JOIN" command multiple times
                         if (membershipList.size() == 0) {
-                            daemon.joinGroup(isIntroducer);
                             ExecutorService mPool = Executors.newFixedThreadPool(4 + ((isIntroducer) ? 1 : 0));
                             mPool.execute(new FileServer());
+                            daemon.joinGroup(isIntroducer);
                             if (isIntroducer) {
                                 mPool.execute(new IntroducerThread());
                             }
                             mPool.execute(new ListeningThread());
-                            mPool.execute(new HeartbeatThread(900));
+                            mPool.execute(new HeartbeatThread(100));
                             mPool.execute(new MonitorThread());
                         }
                         break;
@@ -362,29 +362,34 @@ public class Daemon {
                         System.exit(0);
 
                     case "put":
+                        writeLog(cmd, "");
                         userCommand.putFile(cmdParts);
                         break;
                     case "get": {
+                        writeLog(cmd, "");
                         userCommand.getFile(cmdParts);
                         break;
                     }
                     case "delete": {
+                        writeLog(cmd, "");
                         userCommand.deleteFile(cmdParts);
                         break;
                     }
                     case "ls": {
+                        writeLog(cmd, "");
                         userCommand.listFile(cmdParts);
                         break;
                     }
                     case "store":
+                        writeLog(cmd, "");
                         for (String s : FilesOP.listFiles("../SDFS/"))
                             System.out.println(s);
                         break;
                     default:
                         System.out.println("Unsupported command!");
-                        displayPrompt();
+                        //displayPrompt();
                 }
-                // displayPrompt();
+                displayPrompt();
             }
 
         } catch (IOException e) {

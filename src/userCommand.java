@@ -15,10 +15,11 @@ public class userCommand {
         String tgtFileName = cmdParts[2];
         // int hashValue = Hash.hashing(tgtFileName, 8);
         String fileServer = Hash.getServer(Hash.hashing(tgtFileName, 8)).split("#")[1];
-        System.out.println("Send file to " + fileServer);
+        Daemon.writeLog("put file to", fileServer);
 
         File file = new File(srcFileName);
         if (!file.exists()) {
+            Daemon.writeLog("Local file not exist", srcFileName);
             System.out.println("Local file not exist!");
         } else {
             try {
@@ -28,9 +29,11 @@ public class userCommand {
                 dos.writeUTF("put");
                 dos.writeUTF(tgtFileName);
                 String response = in.readUTF();
-                System.out.println("Server response " + response);
+                Daemon.writeLog("Server response", response);
+
+                Thread t = null;
                 if (response.equals("Accept")) {
-                    FilesOP.sendFile(file, tgtFileName, socket).start();
+                    t = FilesOP.sendFile(file, tgtFileName, socket);
                 } else if (response.equals("Confirm")) {
 
                     System.out.println("Are you sure to send the file? (y/n)");
@@ -50,10 +53,14 @@ public class userCommand {
                             String cmd = StdIn.readLine().toLowerCase();
                             switch (cmd) {
                                 case "y":
-                                    FilesOP.sendFile(file, tgtFileName, socket).start();
+                                    dos.writeUTF("Y");
+                                    Daemon.writeLog("put within 1 min", tgtFileName);
+                                    t = FilesOP.sendFile(file, tgtFileName, socket);
                                     repeat = false;
                                     break;
                                 case "n":
+                                    dos.writeUTF("N");
+                                    Daemon.writeLog("Not put within 1 min", tgtFileName);
                                     repeat = false;
                                     // do nothing
                                     break;
@@ -63,10 +70,16 @@ public class userCommand {
                             }
                         }
                     } else {
+                        Daemon.writeLog("No response for confirmation", tgtFileName);
                         System.out.println("No response! Update aborted!");
                     }
                 }
-            } catch (IOException e) {
+                if (t != null) {
+                    t.start();
+                    t.join();
+                }
+                socket.close();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -91,16 +104,19 @@ public class userCommand {
             socket.setSoTimeout(2000);
             String response = in.readUTF();
             if (response.equals("Empty")) {
+                Daemon.writeLog("No such file!", sdfsFileName);
                 System.out.println("No such file!");
             } else {
                 String[] nodes = response.split("#");
-                System.out.println(sdfsFileName + "is stored in the following nodes:");
-                for (String node: nodes) {
+                Daemon.writeLog("File on node:", "");
+                System.out.println(sdfsFileName + " is stored in the following nodes:");
+                for (String node : nodes) {
+                    Daemon.writeLog("", node);
                     System.out.println(node);
                 }
                 System.out.println("==================================");
             }
-
+            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -118,35 +134,36 @@ public class userCommand {
         String localfilename = cmdParts[2];
         // int hashValue = Hash.hashing(tgtFileName, 8);
         String fileServer = Hash.getServer(Hash.hashing(sdfsfilename, 8)).split("#")[1];
-        System.out.println("Get file from " + fileServer);
-        try (
-                Socket socket = new Socket(fileServer, Daemon.filePortNumber);
-                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                DataInputStream in = new DataInputStream(socket.getInputStream());) {
+        Daemon.writeLog("Get file from", fileServer);
+        try {
+            Socket socket = new Socket(fileServer, Daemon.filePortNumber);
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            DataInputStream in = new DataInputStream(socket.getInputStream());
             out.writeUTF("get");
             out.writeUTF(sdfsfilename);
 
             String response = in.readUTF();
-            System.out.println("Server response " + response);
+            Daemon.writeLog("Server response", response);
 
             if (response.equals("File Exist")) {
                 BufferedOutputStream fileOutputStream = new BufferedOutputStream(
                         new FileOutputStream(localfilename));
 
                 long fileSize = in.readLong();
-                System.out.println("Ture file size:" + fileSize);
+                Daemon.writeLog("Get file size", Long.toString(fileSize));
                 byte[] buffer = new byte[Daemon.bufferSize];
                 int bytes;
                 while (fileSize > 0 && (bytes = in.read(buffer, 0, (int) Math.min(Daemon.bufferSize, fileSize))) != -1) {
                     fileOutputStream.write(buffer, 0, bytes);
                     fileSize -= bytes;
                 }
-                fileOutputStream.flush();
                 fileOutputStream.close();
 
             } else {
-                System.out.println("sdfsfilename not exist!");
+                System.out.println("File not exist!");
             }
+
+            socket.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -163,11 +180,12 @@ public class userCommand {
         String sdfsfilename = cmdParts[1];
         String fileServer = Hash.getServer(Hash.hashing(sdfsfilename, 8)).split("#")[1];
 
-        try (
-                Socket socket = new Socket(fileServer, Daemon.filePortNumber);
-                DataOutputStream dos = new DataOutputStream(socket.getOutputStream())) {
+        try {
+            Socket socket = new Socket(fileServer, Daemon.filePortNumber);
+            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
             dos.writeUTF("delete");
             dos.writeUTF(sdfsfilename);
+            socket.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

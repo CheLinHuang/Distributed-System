@@ -92,7 +92,7 @@ public class ListeningThread extends Thread {
                     // case 0 means heartbeat message
                     case "0":
                         updateMembershipList(parseMsg[1], "HB", Integer.parseInt(parseMsg[2]));
-                        Daemon.writeLog("MESSAGE", "HEARTBEAT");
+                        //Daemon.writeLog("MESSAGE", "HEARTBEAT");
                         break;
                     // case 1 means gossip message
                     case "1":
@@ -103,7 +103,7 @@ public class ListeningThread extends Thread {
                                     Integer.parseInt(parseMsg[3]), --TTL, 4, sendSocket);
                         }
                         updateMembershipList(parseMsg[1], parseMsg[2], Integer.parseInt(parseMsg[3]));
-                        Daemon.writeLog("MESSAGE", "GOSSIP");
+                        //Daemon.writeLog("MESSAGE", "GOSSIP");
                         break;
                 }
             }
