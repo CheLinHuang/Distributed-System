@@ -5,6 +5,8 @@ public class userCommand {
 
     public static void putFile(String[] cmdParts) {
 
+        long requestTime = System.currentTimeMillis();
+
         if (cmdParts.length != 3) {
             System.out.println("Unsupported command format!");
             System.out.println("To put a file into the SDFS");
@@ -23,6 +25,8 @@ public class userCommand {
             System.out.println("Local file not exist!");
         } else {
             try {
+
+
                 Socket socket = new Socket(fileServer, Daemon.filePortNumber);
                 DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
                 DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -35,7 +39,9 @@ public class userCommand {
                 if (response.equals("Accept")) {
                     t = FilesOP.sendFile(file, tgtFileName, socket);
                 } else if (response.equals("Confirm")) {
+                    long responseTime = System.currentTimeMillis();
 
+                    System.out.println("Time to detect conflict " + (responseTime - requestTime));
                     System.out.println("Are you sure to send the file? (y/n)");
                     BufferedReader StdIn = new BufferedReader(new InputStreamReader(System.in));
 
