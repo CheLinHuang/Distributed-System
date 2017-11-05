@@ -10,7 +10,7 @@ public class Hash {
 
         try {
             String a = InetAddress.getLocalHost().toString();
-            System.out.println(a);
+            // System.out.println(a);
             String [] strings = {"AA", "BB", "CC", "DE"};
 
             for (int i = 0 ; i < strings.length; i++) {
@@ -49,9 +49,9 @@ public class Hash {
         int min = keySet[0].intValue();
         int max = keySet[size-1].intValue();
 
-        System.out.println(hashValue);
-        System.out.println(min);
-        System.out.println(max);
+        //System.out.println(hashValue);
+        //System.out.println(min);
+        //System.out.println(max);
 
         if (hashValue > max) {
             return Daemon.hashValues.get(keySet[0]);
@@ -59,10 +59,10 @@ public class Hash {
         if (hashValue < min) {
             return Daemon.hashValues.get(keySet[size - 1]);
         }
-        System.out.println(hashValue);
+        //System.out.println(hashValue);
         int targetIndex = -1;
         for (int i = 0; i < size; i++) {
-            System.out.println(keySet[i].intValue());
+            //System.out.println(keySet[i].intValue());
             if (keySet[i].intValue() >= hashValue && keySet[i - 1].intValue() < hashValue) {
                 targetIndex = i;
             }

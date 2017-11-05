@@ -183,14 +183,14 @@ public class FileServerThread extends Thread {
                         String tgtNode = Daemon.neighbors.get(j--).split("#")[1];
                         try {
                             Socket lsSocket = new Socket(tgtNode, Daemon.filePortNumber);
-                            DataOutputStream out = new DataOutputStream(lsSocket.getOutputStream());
-                            DataInputStream in = new DataInputStream(lsSocket.getInputStream());
+                            DataOutputStream lsOut = new DataOutputStream(lsSocket.getOutputStream());
+                            DataInputStream lsIn = new DataInputStream(lsSocket.getInputStream());
 
-                            out.writeUTF("ls replica");
-                            out.writeUTF(sdfsFileName);
+                            lsOut.writeUTF("ls replica");
+                            lsOut.writeUTF(sdfsFileName);
 
                             lsSocket.setSoTimeout(1000);
-                            String result = in.readUTF();
+                            String result = lsIn.readUTF();
                             if (!result.equals("Empty")) {
                                 queryResult += result + "#";
                             }
