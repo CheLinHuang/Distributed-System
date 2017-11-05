@@ -63,6 +63,7 @@ public class IntroducerThread extends Thread {
 
                 // update my neighbor
                 Daemon.updateNeighbors();
+                if (Daemon.neighborUpdated) Daemon.moveReplica(false);
 
                 Daemon.writeLog("ADD", joinID);
 

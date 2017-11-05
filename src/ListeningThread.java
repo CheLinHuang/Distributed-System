@@ -34,6 +34,7 @@ public class ListeningThread extends Thread {
                         Daemon.writeLog("REJOIN", ID);
                         Daemon.hashValues.put(Hash.hashing(ID, 8), ID);
                         Daemon.updateNeighbors();
+                        if (Daemon.neighborUpdated) Daemon.moveReplica(false);
                     }
                     break;
                 // gossip message to add a new node
@@ -43,6 +44,7 @@ public class ListeningThread extends Thread {
                         if (values == null) {
                             Daemon.hashValues.put(Hash.hashing(ID, 8), ID);
                             Daemon.updateNeighbors();
+                            if (Daemon.neighborUpdated) Daemon.moveReplica(false);
                             Daemon.writeLog("ADD", ID);
                         }
                     }
@@ -53,6 +55,7 @@ public class ListeningThread extends Thread {
                         Daemon.membershipList.remove(ID);
                         Daemon.hashValues.remove(Hash.hashing(ID, 8));
                         Daemon.updateNeighbors();
+                        if (Daemon.neighborUpdated) Daemon.moveReplica(false);
                         Daemon.writeLog("REMOVE", ID);
                     }
                     break;
@@ -62,6 +65,7 @@ public class ListeningThread extends Thread {
                         Daemon.membershipList.remove(ID);
                         Daemon.hashValues.remove(Hash.hashing(ID, 8), ID);
                         Daemon.updateNeighbors();
+                        if (Daemon.neighborUpdated) Daemon.moveReplica(false);
                         Daemon.writeLog("REMOVE", ID);
                     }
             }

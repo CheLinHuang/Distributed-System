@@ -56,6 +56,7 @@ public class MonitorThread extends Thread {
             // If there is an update in membership list, send the gossip and update the neighbors
             if (update) {
                 Daemon.updateNeighbors();
+                if (Daemon.neighborUpdated) Daemon.moveReplica(false);
                 for (int i = 0; i < timeoutID.size(); i++) {
                     Protocol.sendGossip(timeoutID.get(i), "Remove", timeoutCounter.get(i),
                             3, 4, monitorSocket);
