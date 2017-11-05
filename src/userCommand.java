@@ -72,6 +72,40 @@ public class userCommand {
         }
     }
 
+    public static void listFile(String[] cmdParts) {
+        if (cmdParts.length != 2) {
+            System.out.println("Unsupported command format!");
+            System.out.println("To list a file on the SDFS");
+            System.out.println("Please enter \"ls sdfsfilename\"");
+            return;
+        }
+        String sdfsFileName = cmdParts[1];
+        String fileServer = Hash.getServer(Hash.hashing(sdfsFileName, 8)).split("#")[1];
+        try {
+            Socket socket = new Socket(fileServer, Daemon.filePortNumber);
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            DataInputStream in = new DataInputStream(socket.getInputStream());
+            out.writeUTF("ls");
+            out.writeUTF(sdfsFileName);
+
+            socket.setSoTimeout(2000);
+            String response = in.readUTF();
+            if (response.equals("Empty")) {
+                System.out.println("No such file!");
+            } else {
+                String[] nodes = response.split("#");
+                System.out.println(sdfsFileName + "is stored in the following nodes:");
+                for (String node: nodes) {
+                    System.out.println(node);
+                }
+                System.out.println("==================================");
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void getFile(String[] cmdParts) {
         if (cmdParts.length != 3) {
             System.out.println("Unsupported command format!");

@@ -359,27 +359,10 @@ public class Daemon {
                     }
                     case "delete": {
                         userCommand.deleteFile(cmdParts);
+                        break;
                     }
                     case "ls": {
-                        if (cmdParts.length != 2) {
-                            System.out.println("Unsupported command format!");
-                            System.out.println("To list a file on the SDFS");
-                            System.out.println("Please enter \"ls sdfsfilename\"");
-                        } else {
-                            String sdfsfilename = cmdParts[1];
-                            int hash = Hash.hashing(sdfsfilename, 8);
-                            List<String> list = new ArrayList<>(3);
-                            while (list.size() < Math.min(3, membershipList.size())) {
-                                Integer num = hashValues.ceilingKey(hash);
-                                if (num == null)
-                                    num = hashValues.ceilingKey(0);
-                                list.add(hashValues.get(num));
-                                hash = num + 1;
-                            }
-
-                            for (String s : list)
-                                System.out.println(s);
-                        }
+                        userCommand.listFile(cmdParts);
                         break;
                     }
                     case "store":
