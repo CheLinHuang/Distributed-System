@@ -63,6 +63,8 @@ public class FilesOP {
             // Support file < 2GB with int casting
             byte[] byteArray = new byte[(int) file.length()];
 
+            System.out.println("File size: " + file.length());
+
             //Send file
             try (
                     DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));

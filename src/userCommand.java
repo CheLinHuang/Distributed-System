@@ -1,5 +1,5 @@
-import java.net.Socket;
 import java.io.*;
+import java.net.Socket;
 
 public class userCommand {
 

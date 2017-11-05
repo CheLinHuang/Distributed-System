@@ -135,14 +135,13 @@ public class FileServerThread extends Thread {
                 }
                 case "get": {
                     String sdfsfilename = clientData.readUTF();
-                    String localfilename = clientData.readUTF();
 
                     File file = new File("../SDFS/" + sdfsfilename);
                     if (!file.exists()) {
                         out.writeUTF("File Not Exist");
                     } else {
                         out.writeUTF("File Exist");
-                        FilesOP.sendFile(file, localfilename, socket);
+                        FilesOP.sendFile(file, sdfsfilename, socket);
                     }
                     break;
                 }
