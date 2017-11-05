@@ -156,7 +156,7 @@ public class Daemon {
                                     if (returnMsg != null && returnMsg.equals("Ready to receive")) {
                                         FilesOP.sendFile(new File("../SDFS/" + file), file, socket);
                                     }
-                                    
+
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
