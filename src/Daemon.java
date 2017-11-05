@@ -23,7 +23,7 @@ public class Daemon {
     static final TreeMap<Integer, String> hashValues = new TreeMap<>();
     private static PrintWriter fileOutput;
     private String[] hostNames;
-    final static int bufferSize = 1024;
+    final static int bufferSize = 128;
 
     public Daemon(String configPath) {
 
@@ -111,7 +111,7 @@ public class Daemon {
                         }
                     }
                 }
-
+/*
                 boolean updated = false;
                 for (int i = 0; i < oldNeighbors.size() && i < neighbors.size(); i++) {
                     if (!oldNeighbors.get(i).equals(neighbors.get(i))) {
@@ -160,7 +160,7 @@ public class Daemon {
                         }
                     }
                 }
-
+*/
                 System.out.println("print neighbors......");
                 for (String neighbor : neighbors) {
                     System.out.println(neighbor);

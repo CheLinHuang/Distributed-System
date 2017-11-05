@@ -73,7 +73,7 @@ public class FileServerThread extends Thread {
                         DataOutputStream outPrint = new DataOutputStream(replicaSocket.getOutputStream());
                         outPrint.writeUTF("replica");
                         outPrint.writeUTF(sdfsfilename);
-                        FilesOP.sendFile(file, "../SDFS/" + sdfsfilename, replicaSocket);
+                        FilesOP.sendFile(file, "../SDFS/" + sdfsfilename, replicaSocket).start();
                         index--;
                     }
 
@@ -141,7 +141,9 @@ public class FileServerThread extends Thread {
                         out.writeUTF("File Not Exist");
                     } else {
                         out.writeUTF("File Exist");
-                        FilesOP.sendFile(file, sdfsfilename, socket);
+                        Thread t = FilesOP.sendFile(file, sdfsfilename, socket);
+                        t.start();
+                        t.join();
                     }
                     break;
                 }
@@ -182,7 +184,7 @@ public class FileServerThread extends Thread {
                         String tgtNode = Daemon.neighbors.get(j--).split("#")[1];
                         try {
                             Socket lsSocket = new Socket(tgtNode, Daemon.filePortNumber);
-                            DataOutputStream out = new DataOutputStream(lsSocket.getOutputStream());
+                            //DataOutputStream out = new DataOutputStream(lsSocket.getOutputStream());
                             DataInputStream in = new DataInputStream(lsSocket.getInputStream());
 
                             out.writeUTF("ls replica");
