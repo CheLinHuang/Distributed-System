@@ -117,7 +117,7 @@ public class FileServerThread extends Thread {
                     String sdfsfilename = clientData.readUTF();
 
                     if (!new File("../SDFS/" + sdfsfilename).exists()) {
-                        out.println("Ready to receive");
+                        out.writeUTF("Ready to receive");
                         BufferedOutputStream fileOutputStream = new BufferedOutputStream(
                                 new FileOutputStream("../SDFS/" + sdfsfilename));
 
@@ -155,15 +155,15 @@ public class FileServerThread extends Thread {
                     // TODO delete replica
                     int index = Daemon.neighbors.size() - 1;
                     for (int i = 0; index >= 0 && i < 2; i++) {
-                        Socket replicaSocket = new Socket(Daemon.neighbors.get(index).split("#")[1], 123);
-                        PrintWriter outPrint = new PrintWriter(replicaSocket.getOutputStream(), true);
-                        outPrint.println("delete replica");
-                        outPrint.println(sdfsfilename);
+                        Socket replicaSocket = new Socket(Daemon.neighbors.get(index).split("#")[1], Daemon.filePortNumber);
+                        DataOutputStream outPrint = new DataOutputStream(replicaSocket.getOutputStream());
+                        outPrint.writeUTF("delete replica");
+                        outPrint.writeUTF(sdfsfilename);
                         replicaSocket.close();
                         index--;
                     }
 
-                    out.writeUTF("Delete Success");
+                    //out.writeUTF("Delete Success");
                     break;
                 }
                 case "delete replica": {

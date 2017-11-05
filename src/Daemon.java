@@ -23,6 +23,7 @@ public class Daemon {
     static final TreeMap<Integer, String> hashValues = new TreeMap<>();
     private static PrintWriter fileOutput;
     private String[] hostNames;
+    private final static int bufferSize = 1024;
 
     public Daemon(String configPath) {
 
@@ -112,7 +113,7 @@ public class Daemon {
                 }
 
                 boolean updated = false;
-                for (int i = 0; i < neighbors.size(); i++) {
+                for (int i = 0; i < oldNeighbors.size() && i < neighbors.size(); i++) {
                     if (!oldNeighbors.get(i).equals(neighbors.get(i))) {
                         updated = true;
                         break;
@@ -349,11 +350,11 @@ public class Daemon {
                         fileOutput.close();
                         System.exit(0);
 
-                    case "put":
+                    case "put": {
                         if (cmdParts.length != 3) {
                             System.out.println("Unsupported command format!");
                             System.out.println("To put a file into the SDFS");
-                            System.out.println("Please enter \"put srcFileName tgtFileName\"");
+                            System.out.println("Please enter \"put localfilename sdfsfilename\"");
                             break;
                         }
                         String srcFileName = cmdParts[1];
@@ -378,12 +379,88 @@ public class Daemon {
                             }
                         }
                         break;
-                    case "get":
+                    }
+                    case "get": {
+                        if (cmdParts.length != 3) {
+                            System.out.println("Unsupported command format!");
+                            System.out.println("To get a file from the SDFS");
+                            System.out.println("Please enter \"get sdfsfilename localfilename\"");
+                            break;
+                        }
+
+                        String sdfsfilename = cmdParts[1];
+                        String localfilename = cmdParts[2];
+                        // int hashValue = Hash.hashing(tgtFileName, 8);
+                        String fileServer = Hash.getServer(Hash.hashing(sdfsfilename, 8)).split("#")[1];
+                        System.out.println("Get file from " + fileServer);
+                        Socket socket = new Socket(fileServer, filePortNumber);
+                        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                        DataInputStream in = new DataInputStream(socket.getInputStream());
+                        out.writeUTF("get");
+                        out.writeUTF(sdfsfilename);
+
+                        String response = in.readUTF();
+                        System.out.println("Server response " + response);
+
+                        if (response.equals("File Exist")) {
+                            BufferedOutputStream fileOutputStream = new BufferedOutputStream(
+                                    new FileOutputStream(localfilename));
+
+                            long fileSize = in.readLong();
+                            System.out.println("Ture file size:" + fileSize);
+                            byte[] buffer = new byte[bufferSize];
+                            int bytes;
+                            while (fileSize > 0 && (bytes = in.read(buffer, 0, (int) Math.min(bufferSize, fileSize))) != -1) {
+                                fileOutputStream.write(buffer, 0, bytes);
+                                fileSize -= bytes;
+                            }
+                            fileOutputStream.flush();
+                            fileOutputStream.close();
+
+                        } else {
+                            System.out.println("sdfsfilename not exist!");
+                        }
                         break;
-                    case "delete":
+                    }
+                    case "delete": {
+                        if (cmdParts.length != 2) {
+                            System.out.println("Unsupported command format!");
+                            System.out.println("To delete a file on the SDFS");
+                            System.out.println("Please enter \"delete sdfsfilename\"");
+                            break;
+                        }
+
+                        String sdfsfilename = cmdParts[1];
+                        String fileServer = Hash.getServer(Hash.hashing(sdfsfilename, 8)).split("#")[1];
+                        Socket socket = new Socket(fileServer, filePortNumber);
+                        DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+                        DataInputStream in = new DataInputStream(socket.getInputStream());
+                        dos.writeUTF("delete");
+                        dos.writeUTF(sdfsfilename);
                         break;
-                    case "ls":
+                    }
+                    case "ls": {
+                        if (cmdParts.length != 2) {
+                            System.out.println("Unsupported command format!");
+                            System.out.println("To list a file on the SDFS");
+                            System.out.println("Please enter \"ls sdfsfilename\"");
+                        } else {
+                            String sdfsfilename = cmdParts[1];
+                            int hash = Hash.hashing(sdfsfilename, 8);
+                            List<String> list = new ArrayList<>(3);
+                            while (list.size() < Math.min(3, membershipList.size())) {
+                                Integer num = hashValues.ceilingKey(hash);
+                                if (num == null)
+                                    num = hashValues.ceilingKey(0);
+                                list.add(hashValues.get(num));
+                                hash = num + 1;
+                            }
+
+                            for (String s : list)
+                                System.out.println(s);
+                        }
                         break;
+                    }
                     case "store":
                         for (String s : FilesOP.listFiles("../SDFS/"))
                             System.out.println(s);
