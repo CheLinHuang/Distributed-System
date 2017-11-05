@@ -19,7 +19,7 @@ public class FileServerThread extends Thread {
 
         //while (true) {
         try (
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
                 DataInputStream clientData = new DataInputStream(socket.getInputStream())
         ) {
 
@@ -27,50 +27,59 @@ public class FileServerThread extends Thread {
 
             String operation = clientData.readUTF();
 
+            System.out.println("Operation: " + operation);
+
             switch (operation) {
                 case "put": {
                     // Read filename from clientData.readUTF()
                     String sdfsfilename = clientData.readUTF();
 
+                    System.out.println("sdfsfilename: " + sdfsfilename);
+
                     // TODO check time stamp
-                    out.println("Accept");
+                    out.writeUTF("Accept");
 
                     BufferedOutputStream fileOutputStream = new BufferedOutputStream(
                             new FileOutputStream("../SDFS/" + sdfsfilename));
 
                     long fileSize = clientData.readLong();
+                    System.out.println("Ture file size:" + fileSize);
                     byte[] buffer = new byte[bufferSize];
                     int bytes;
                     while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(bufferSize, fileSize))) != -1) {
                         fileOutputStream.write(buffer, 0, bytes);
                         fileSize -= bytes;
                     }
+                    fileOutputStream.flush();
+                    fileOutputStream.close();
 
                     File file = new File("../SDFS/" + sdfsfilename);
-                    if (file.length() == fileSize) {
+                    System.out.println("Actual file size:" + file.length());
+                    //if (file.length() == fileSize) {
                         //out.println("Received");
                         System.out.println("File received");
                         System.out.println("File name:" + sdfsfilename);
 
-                    } else {
+                    /*} else {
                         System.out.println("Fail to receive file");
-                        out.println("Resend");
+                        out.writeUTF("Resend");
                         FilesOP.deleteFile(sdfsfilename);
                     }
+*/
 
-                    fileOutputStream.close();
 
                     // TODO send replica
                     int index = Daemon.neighbors.size() - 1;
                     for (int i = 0; index >= 0 && i < 2; i++) {
-                        Socket replicaSocket = new Socket(Daemon.neighbors.get(index), Daemon.filePortNumber);
-                        PrintWriter outPrint = new PrintWriter(replicaSocket.getOutputStream(), true);
-                        outPrint.println("replica");
-                        FilesOP.sendFile(file, sdfsfilename, replicaSocket);
+                        Socket replicaSocket = new Socket(Daemon.neighbors.get(index).split("#")[1], Daemon.filePortNumber);
+                        DataOutputStream outPrint = new DataOutputStream(replicaSocket.getOutputStream());
+                        outPrint.writeUTF("replica");
+                        outPrint.writeUTF(sdfsfilename);
+                        FilesOP.sendFile(file, "../SDFS/" + sdfsfilename, replicaSocket);
                         index--;
                     }
 
-                    out.println("Put Success");
+                    //out.writeUTF("Put Success");
                     break;
                 }
                 case "replica": {
@@ -86,19 +95,21 @@ public class FileServerThread extends Thread {
                         fileOutputStream.write(buffer, 0, bytes);
                         fileSize -= bytes;
                     }
+                    fileOutputStream.flush();
 
                     File file = new File("../SDFS/" + sdfsfilename);
-                    if (file.length() == fileSize) {
-                        out.println("Replica Received");
-                        System.out.println("Replica File received");
+                    /*if (file.length() == fileSize) {
+                        out.writeUTF("Replica Received");
+                    */
+                    System.out.println("Replica File received");
                         System.out.println("Replica File name:" + sdfsfilename);
-
+/*
                     } else {
                         System.out.println("Fail to receive file");
-                        out.println("Resend");
+                        out.writeUTF("Resend");
                         FilesOP.deleteFile(sdfsfilename);
                     }
-
+*/
                     fileOutputStream.close();
                     break;
                 }
@@ -120,7 +131,7 @@ public class FileServerThread extends Thread {
 
                         fileOutputStream.close();
                     } else {
-                        out.println("Replica Exist");
+                        out.writeUTF("Replica Exist");
                     }
                     break;
                 }
@@ -130,9 +141,9 @@ public class FileServerThread extends Thread {
 
                     File file = new File("../SDFS/" + sdfsfilename);
                     if (!file.exists()) {
-                        out.println("File Not Exist");
+                        out.writeUTF("File Not Exist");
                     } else {
-                        out.println("File Exist");
+                        out.writeUTF("File Exist");
                         FilesOP.sendFile(file, localfilename, socket);
                     }
                     break;
@@ -144,7 +155,7 @@ public class FileServerThread extends Thread {
                     // TODO delete replica
                     int index = Daemon.neighbors.size() - 1;
                     for (int i = 0; index >= 0 && i < 2; i++) {
-                        Socket replicaSocket = new Socket(Daemon.neighbors.get(index), 123);
+                        Socket replicaSocket = new Socket(Daemon.neighbors.get(index).split("#")[1], 123);
                         PrintWriter outPrint = new PrintWriter(replicaSocket.getOutputStream(), true);
                         outPrint.println("delete replica");
                         outPrint.println(sdfsfilename);
@@ -152,7 +163,7 @@ public class FileServerThread extends Thread {
                         index--;
                     }
 
-                    out.println("Delete Success");
+                    out.writeUTF("Delete Success");
                     break;
                 }
                 case "delete replica": {
