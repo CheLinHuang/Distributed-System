@@ -51,7 +51,7 @@ public class FilesOP {
         Socket socket;
         String fileName;
 
-        SendFileThread(File file, Socket socket, String fileName) {
+        public SendFileThread(File file, Socket socket, String fileName) {
             this.file = file;
             this.socket = socket;
             this.fileName = fileName;

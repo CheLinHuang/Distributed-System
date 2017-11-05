@@ -73,6 +73,8 @@ public class Daemon {
 
         synchronized (membershipList) {
             synchronized (neighbors) {
+                List<String> oldNeighbors = new ArrayList<>(neighbors);
+
                 neighbors.clear();
 
                 Integer currentHash = myHashValue;
@@ -105,6 +107,55 @@ public class Daemon {
                             neighbors.add(hashValues.get(currentHash));
                         } catch (Exception e) {
                             e.printStackTrace();
+                        }
+                    }
+                }
+
+                boolean updated = false;
+                for (int i = 0; i < neighbors.size(); i++) {
+                    if (!oldNeighbors.get(i).equals(neighbors.get(i))) {
+                        updated = true;
+                        break;
+                    }
+                }
+                if (updated) {
+                    List<String> fileList = FilesOP.listFiles("../SDFS/");
+                    for (int i = 0; i < fileList.size(); i++) {
+                        String file = fileList.get(i);
+                        String targetID = Hash.getServer(Hash.hashing(file, 8));
+                        if (targetID.equals(ID)) {
+                            // replicate the file to the two successors
+                            int j = neighbors.size()- 1;
+                            while (j >= 0) {
+                                String tgtHostName = neighbors.get(j--).split("#")[1];
+                                try {
+                                    Socket socket = new Socket(tgtHostName, filePortNumber);
+                                    PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                                    out.println("fail replica");
+                                    out.println(file);
+                                    String returnMsg = in.readLine();
+                                    if (returnMsg.equals("Ready to receive")) {
+                                        FilesOP.sendFile(new File(file), file, socket);
+                                    }
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            try {
+                                Socket socket = new Socket(targetID.split("#")[1], filePortNumber);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                        } else if (!neighbors.contains(targetID)) {
+                            // consider the case that new node is added,
+                            // and the target node is no longer in the neighbor list,
+                            // this means that this file is longer needed
+                            if (FilesOP.deleteFile(file)) {
+                                System.out.println(file + "is successfully deleted!");
+                                // writeLog();
+                            }
                         }
                     }
                 }

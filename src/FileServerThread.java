@@ -106,7 +106,7 @@ public class FileServerThread extends Thread {
                     String sdfsfilename = clientData.readUTF();
 
                     if (!new File("../SDFS/" + sdfsfilename).exists()) {
-
+                        out.println("Ready to receive");
                         BufferedOutputStream fileOutputStream = new BufferedOutputStream(
                                 new FileOutputStream("../SDFS/" + sdfsfilename));
 

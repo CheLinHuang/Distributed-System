@@ -20,20 +20,8 @@ public class Test {
 
     public static void main(String[] args) {
         Map<String, Integer[]> test = new HashMap<>();
-        test.put("A", new Integer[] {3,3});
-        test.put("B", new Integer[] {2,2});
-        test.put("C", new Integer[] {1,9});
-
-        /*
-        test.put("A", new long[] {1, 4, 3});
-        test.put("B", new long[] {2, 4, 2});
-        test.put("C", new long[] {2, 4, 9});
-        */
-
-        test = sortByValue(test);
-        for (String key: test.keySet()) {
-            System.out.println(key);
-        }
+        int a = 5/2;
+        System.out.println(a);
 
     }
 }
