@@ -159,9 +159,10 @@ public class Daemon {
                     out.writeUTF("get replica");
                     out.writeUTF(ID);
                     // still shows EOF exception
-                    String sdfsFileName = in.readUTF();
-                    System.out.println("Message received: " + sdfsFileName);
-                    if (!sdfsFileName.equals("Empty")) {
+                    String sdfsFileName;
+
+                    while (!(sdfsFileName = in.readUTF()).equals("Empty")) {
+
                         BufferedOutputStream fileOutputStream = new BufferedOutputStream(
                                 new FileOutputStream("../SDFS/" + sdfsFileName));
 
@@ -173,7 +174,10 @@ public class Daemon {
                             fileSize -= bytes;
                         }
                         fileOutputStream.flush();
+                        fileOutputStream.close();
+                        out.writeUTF("Received");
                     }
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -192,6 +196,7 @@ public class Daemon {
 
                     // replicate the file to the two successors
                     System.out.println("Send Replica");
+                    List<Thread> threads = new ArrayList<>();
                     int j = neighbors.size() - 1;
                     while (j >= Math.max(0, neighbors.size() - 2)) {
                         String tgtHostName = neighbors.get(j--).split("#")[1];
@@ -206,9 +211,17 @@ public class Daemon {
                             // for the case that the neighbor is also failed subsequently
                             // returnMsg will be null
                             if (returnMsg != null && returnMsg.equals("Ready to receive")) {
-                                FilesOP.sendFile(new File("../SDFS/" + file), file, socket).start();
+                                threads.add(FilesOP.sendFile(new File("../SDFS/" + file), file, socket));
+                                threads.get(threads.size() - 1).start();
                             }
                         } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    for (Thread t: threads) {
+                        try {
+                            t.join();
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
@@ -227,7 +240,7 @@ public class Daemon {
                     }
                     if (delete) {
                         System.out.println("Delete replica...");
-                        if (FilesOP.deleteFile(file)) {
+                        if (FilesOP.deleteFile("../SDFS/" + file)) {
                             System.out.println(file + "is successfully deleted!");
                         }
                     }

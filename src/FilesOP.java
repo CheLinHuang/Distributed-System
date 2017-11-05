@@ -67,7 +67,7 @@ public class FilesOP {
             try (
                     DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
                     DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-                    // BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))
+                    DataInputStream sktResponse = new DataInputStream(socket.getInputStream())
             ) {
 
                 //Sending file name and file size to the server
@@ -75,15 +75,18 @@ public class FilesOP {
                 //dos.writeUTF(fileName);
                 dos.writeLong(byteArray.length);
 
-                //Sending file data to the server
+                // Sending file data to the server
                 dos.write(byteArray);
                 dos.flush();
 
+                // wait for the server to response
+                String res = sktResponse.readUTF();
+                if (res.equals("Received")) {
+                    System.out.println("Send the file successfully");
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
-            System.out.println("Send File Thread finish");
         }
     }
 }

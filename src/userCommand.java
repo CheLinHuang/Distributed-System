@@ -30,10 +30,12 @@ public class userCommand {
                 dos.writeUTF(tgtFileName);
                 String response = in.readUTF();
                 Daemon.writeLog("Server response", response);
-
                 Thread t = null;
+
                 if (response.equals("Accept")) {
+
                     t = FilesOP.sendFile(file, tgtFileName, socket);
+
                 } else if (response.equals("Confirm")) {
 
                     System.out.println("Are you sure to send the file? (y/n)");
@@ -78,7 +80,9 @@ public class userCommand {
                     t.start();
                     t.join();
                 }
+                System.out.println("Put file successfully");
                 socket.close();
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -158,6 +162,7 @@ public class userCommand {
                     fileSize -= bytes;
                 }
                 fileOutputStream.close();
+                out.writeUTF("Received");
 
             } else {
                 System.out.println("File not exist!");
