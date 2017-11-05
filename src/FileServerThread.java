@@ -12,8 +12,6 @@ public class FileServerThread extends Thread {
         this.socket = socket;
     }
 
-    private final static int bufferSize = 1024;
-
     @Override
     public void run() {
 
@@ -44,9 +42,9 @@ public class FileServerThread extends Thread {
 
                     long fileSize = clientData.readLong();
                     System.out.println("Ture file size:" + fileSize);
-                    byte[] buffer = new byte[bufferSize];
+                    byte[] buffer = new byte[Daemon.bufferSize];
                     int bytes;
-                    while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(bufferSize, fileSize))) != -1) {
+                    while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(Daemon.bufferSize, fileSize))) != -1) {
                         fileOutputStream.write(buffer, 0, bytes);
                         fileSize -= bytes;
                     }
@@ -89,9 +87,9 @@ public class FileServerThread extends Thread {
                             new FileOutputStream("../SDFS/" + sdfsfilename));
 
                     long fileSize = clientData.readLong();
-                    byte[] buffer = new byte[bufferSize];
+                    byte[] buffer = new byte[Daemon.bufferSize];
                     int bytes;
-                    while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(bufferSize, fileSize))) != -1) {
+                    while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(Daemon.bufferSize, fileSize))) != -1) {
                         fileOutputStream.write(buffer, 0, bytes);
                         fileSize -= bytes;
                     }
@@ -117,14 +115,14 @@ public class FileServerThread extends Thread {
                     String sdfsfilename = clientData.readUTF();
 
                     if (!new File("../SDFS/" + sdfsfilename).exists()) {
-                        out.println("Ready to receive");
+                        out.writeUTF("Ready to receive");
                         BufferedOutputStream fileOutputStream = new BufferedOutputStream(
                                 new FileOutputStream("../SDFS/" + sdfsfilename));
 
                         long fileSize = clientData.readLong();
-                        byte[] buffer = new byte[bufferSize];
+                        byte[] buffer = new byte[Daemon.bufferSize];
                         int bytes;
-                        while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(bufferSize, fileSize))) != -1) {
+                        while (fileSize > 0 && (bytes = clientData.read(buffer, 0, (int) Math.min(Daemon.bufferSize, fileSize))) != -1) {
                             fileOutputStream.write(buffer, 0, bytes);
                             fileSize -= bytes;
                         }
@@ -155,15 +153,15 @@ public class FileServerThread extends Thread {
                     // TODO delete replica
                     int index = Daemon.neighbors.size() - 1;
                     for (int i = 0; index >= 0 && i < 2; i++) {
-                        Socket replicaSocket = new Socket(Daemon.neighbors.get(index).split("#")[1], 123);
-                        PrintWriter outPrint = new PrintWriter(replicaSocket.getOutputStream(), true);
-                        outPrint.println("delete replica");
-                        outPrint.println(sdfsfilename);
+                        Socket replicaSocket = new Socket(Daemon.neighbors.get(index).split("#")[1], Daemon.filePortNumber);
+                        DataOutputStream outPrint = new DataOutputStream(replicaSocket.getOutputStream());
+                        outPrint.writeUTF("delete replica");
+                        outPrint.writeUTF(sdfsfilename);
                         replicaSocket.close();
                         index--;
                     }
 
-                    out.writeUTF("Delete Success");
+                    //out.writeUTF("Delete Success");
                     break;
                 }
                 case "delete replica": {

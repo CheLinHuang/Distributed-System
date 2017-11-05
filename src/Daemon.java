@@ -23,6 +23,7 @@ public class Daemon {
     static final TreeMap<Integer, String> hashValues = new TreeMap<>();
     private static PrintWriter fileOutput;
     private String[] hostNames;
+    final static int bufferSize = 1024;
 
     public Daemon(String configPath) {
 
@@ -112,7 +113,7 @@ public class Daemon {
                 }
 
                 boolean updated = false;
-                for (int i = 0; i < neighbors.size(); i++) {
+                for (int i = 0; i < oldNeighbors.size() && i < neighbors.size(); i++) {
                     if (!oldNeighbors.get(i).equals(neighbors.get(i))) {
                         updated = true;
                         break;
@@ -350,15 +351,37 @@ public class Daemon {
                         System.exit(0);
 
                     case "put":
-                        userCommand.putFile(cmdParts, filePortNumber);
+                        userCommand.putFile(cmdParts);
                         break;
-                    case "get":
+                    case "get": {
+                        userCommand.getFile(cmdParts);
+                        break;
+                    }
+                    case "delete": {
+                        userCommand.deleteFile(cmdParts);
+                    }
+                    case "ls": {
+                        if (cmdParts.length != 2) {
+                            System.out.println("Unsupported command format!");
+                            System.out.println("To list a file on the SDFS");
+                            System.out.println("Please enter \"ls sdfsfilename\"");
+                        } else {
+                            String sdfsfilename = cmdParts[1];
+                            int hash = Hash.hashing(sdfsfilename, 8);
+                            List<String> list = new ArrayList<>(3);
+                            while (list.size() < Math.min(3, membershipList.size())) {
+                                Integer num = hashValues.ceilingKey(hash);
+                                if (num == null)
+                                    num = hashValues.ceilingKey(0);
+                                list.add(hashValues.get(num));
+                                hash = num + 1;
+                            }
 
+                            for (String s : list)
+                                System.out.println(s);
+                        }
                         break;
-                    case "delete":
-                        break;
-                    case "ls":
-                        break;
+                    }
                     case "store":
                         for (String s : FilesOP.listFiles("../SDFS/"))
                             System.out.println(s);
