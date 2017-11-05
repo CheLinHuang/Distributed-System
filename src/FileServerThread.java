@@ -167,7 +167,57 @@ public class FileServerThread extends Thread {
                 case "delete replica": {
                     String sdfsfilename = clientData.readUTF();
                     FilesOP.deleteFile("../SDFS/" + sdfsfilename);
+                    break;
                 }
+                case "ls": {
+                    String queryResult = "";
+                    String sdfsFileName = clientData.readUTF();
+                    // query the file locally on the coordinator
+                    if (new File("../SDFS/" + sdfsFileName).exists()) {
+                        queryResult += Daemon.ID.split("#")[1] + "#";
+                    }
+
+                    // query the file on the neighbors of the coordinator
+                    int j = Daemon.neighbors.size() - 1 ;
+                    while (j >= 0) {
+                        String tgtNode = Daemon.neighbors.get(j--).split("#")[1];
+                        try {
+                            Socket lsSocket = new Socket(tgtNode, Daemon.filePortNumber);
+                            DataOutputStream out = new DataOutputStream(lsSocket.getOutputStream());
+                            DataInputStream in = new DataInputStream(lsSocket.getInputStream());
+
+                            out.writeUTF("ls replica");
+                            out.writeUTF(sdfsFileName);
+
+                            lsSocket.setSoTimeout(1000);
+                            String result = in.readUTF();
+                            if (!result.equals("Empty")) {
+                                queryResult += result + "#";
+                            }
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (queryResult.isEmpty()) {
+                        out.writeUTF("Empty");
+                    } else {
+                        queryResult = queryResult.substring(0, queryResult.length()-1);
+                        out.writeUTF(queryResult);
+                    }
+                    break;
+                }
+                case "ls replica": {
+                    // check if the query file exists on the replica node
+                    String sdfsFileName = clientData.readUTF();
+                    if (new File("../SDFS/" + sdfsFileName).exists()) {
+                        out.writeUTF(Daemon.ID.split("#")[1]);
+                    } else {
+                        out.writeUTF("Empty");
+                    }
+
+                }
+
             }
 
 
