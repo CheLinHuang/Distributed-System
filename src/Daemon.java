@@ -128,48 +128,90 @@ public class Daemon {
 
                 if (updated) {
                     List<String> fileList = FilesOP.listFiles("../SDFS/");
-                    for (int i = 0; i < fileList.size(); i++) {
-                        String file = fileList.get(i);
-                        String targetID = Hash.getServer(Hash.hashing(file, 8));
-                        System.out.println("Do replication transfer!");
-                        System.out.println(file);
-                        System.out.println(targetID);
+                    if (fileList.size() == 0) {
+                        System.out.println("The file list is empty!!");
+                        int j = neighbors.size() - 1;
+                        while (j >= Math.max(0, neighbors.size()-2)) {
+                            String tgtHostName = neighbors.get(j--).split("#")[1];
+                            try {
+                                Socket socket = new Socket(tgtHostName, filePortNumber);
+                                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                                DataInputStream in = new DataInputStream(socket.getInputStream());
 
-                        if (targetID.equals(ID)) {
-                            // replicate the file to the two successors
-                            int j = neighbors.size()- 1;
-                            while (j >= 0) {
-                                String tgtHostName = neighbors.get(j--).split("#")[1];
-                                System.out.println(tgtHostName);
-                                try {
-                                    System.out.println("Sending the replica...");
-                                    Socket socket = new Socket(tgtHostName, filePortNumber);
-                                    DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                                    DataInputStream in = new DataInputStream(socket.getInputStream());
-                                    out.writeUTF("fail replica");
-                                    out.writeUTF(file);
-                                    String returnMsg = in.readUTF();
-                                    // for the case that the neighbor is also failed subsequently
-                                    // returnMsg will be null
-                                    System.out.println("Return...");
-                                    System.out.println(returnMsg);
-                                    if (returnMsg != null && returnMsg.equals("Ready to receive")) {
-                                        FilesOP.sendFile(new File("../SDFS/" + file), file, socket);
+                                out.writeUTF("get replica");
+                                out.writeUTF(ID);
+                                String sdfsFileName = in.readUTF();
+                                if (!sdfsFileName.equals("Empty")) {
+                                    BufferedOutputStream fileOutputStream = new BufferedOutputStream(
+                                            new FileOutputStream("../SDFS/" + sdfsFileName));
+
+                                    long fileSize = in.readLong();
+                                    byte[] buffer = new byte[Daemon.bufferSize];
+                                    int bytes;
+                                    while (fileSize > 0 && (bytes = in.read(buffer, 0, (int) Math.min(Daemon.bufferSize, fileSize))) != -1) {
+                                        fileOutputStream.write(buffer, 0, bytes);
+                                        fileSize -= bytes;
                                     }
-                                } catch (IOException e) {
-                                    e.printStackTrace();
+                                    fileOutputStream.flush();
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    } else {
+                        for (int i = 0; i < fileList.size(); i++) {
+                            String file = fileList.get(i);
+                            String targetID = Hash.getServer(Hash.hashing(file, 8));
+                            System.out.println("Do replication transfer!");
+                            System.out.println("The targetNode for file is");
+                            System.out.println(targetID);
+
+                            if (targetID.equals(ID)) {
+
+                                // replicate the file to the two successors
+                                System.out.println("Send Replica");
+                                int j = neighbors.size() - 1;
+                                while (j >= Math.max(0, neighbors.size() - 2)) {
+                                    String tgtHostName = neighbors.get(j--).split("#")[1];
+                                    try {
+                                        Socket socket = new Socket(tgtHostName, filePortNumber);
+                                        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                                        DataInputStream in = new DataInputStream(socket.getInputStream());
+                                        out.writeUTF("fail replica");
+                                        out.writeUTF(file);
+                                        String returnMsg = in.readUTF();
+                                        // for the case that the neighbor is also failed subsequently
+                                        // returnMsg will be null
+                                        // System.out.println(returnMsg);
+                                        if (returnMsg != null && returnMsg.equals("Ready to receive")) {
+                                            FilesOP.sendFile(new File("../SDFS/" + file), file, socket).start();
+                                        }
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } else {
+                                // consider the case that new node is added,
+                                // and the target node is no longer in the neighbor list,
+                                // this means that this file is longer needed
+                                int j = 0;
+                                boolean delete = true;
+                                while (j < Math.min(neighbors.size(), 2)) {
+                                    if (neighbors.get(j).equals(targetID)) {
+                                        delete = false;
+                                        break;
+                                    }
+                                    j++;
+                                }
+                                if (delete) {
+                                    System.out.println("Delete replica...");
+                                    if (FilesOP.deleteFile(file)) {
+                                        System.out.println(file + "is successfully deleted!");
+                                        // writeLog();
+                                    }
                                 }
                             }
-                        } /*else if (!neighbors.contains(targetID)) {
-                            // consider the case that new node is added,
-                            // and the target node is no longer in the neighbor list,
-                            // this means that this file is longer needed
-                            System.out.println("Delete the replica...");
-                            if (FilesOP.deleteFile(file)) {
-                                System.out.println(file + "is successfully deleted!");
-                                // writeLog();
-                            }
-                        }*/
+                        }
                     }
                 }
 
@@ -323,9 +365,9 @@ public class Daemon {
                     case "join":
                         // to deal with the case that users enter "JOIN" command multiple times
                         if (membershipList.size() == 0) {
-                            daemon.joinGroup(isIntroducer);
                             ExecutorService mPool = Executors.newFixedThreadPool(4 + ((isIntroducer) ? 1 : 0));
                             mPool.execute(new FileServer());
+                            daemon.joinGroup(isIntroducer);
                             if (isIntroducer) {
                                 mPool.execute(new IntroducerThread());
                             }
