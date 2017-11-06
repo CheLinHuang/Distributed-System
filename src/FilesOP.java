@@ -5,6 +5,7 @@ import java.util.List;
 
 public class FilesOP {
 
+    // Return all the files within given directory (includes sub-directory)
     public static List<String> listFiles(String dirName) {
 
         List<String> result = new ArrayList<>();
@@ -14,6 +15,7 @@ public class FilesOP {
         return result;
     }
 
+    // Helper method to get filenames
     private static void listFilesHelper(File file, String dirName, List<String> result) {
 
         File[] fileList = file.listFiles();
@@ -28,38 +30,37 @@ public class FilesOP {
         }
     }
 
+    // Delete the given file
     public static boolean deleteFile(String fileName) {
         File file = new File(fileName);
         return file.delete();
     }
 
-    public static Thread sendFile(File file, String fileName, Socket socket) {
-
-        return new SendFileThread(file, socket, fileName);
+    // Return a thread for sending file purpose
+    public static Thread sendFile(File file, Socket socket) {
+        return new SendFileThread(file, socket);
     }
 
+    // Thread class for sending file purpose
     static class SendFileThread extends Thread {
         File file;
         Socket socket;
-        String fileName;
 
-        public SendFileThread(File file, Socket socket, String fileName) {
+        public SendFileThread(File file, Socket socket) {
             this.file = file;
             this.socket = socket;
-            this.fileName = fileName;
         }
 
         @Override
         public void run() {
 
-            byte[] buffer = new byte[4096];
-            //Send file
+            // Read file buffer
+            byte[] buffer = new byte[2048];
             try (
                     DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
                     DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
                     DataInputStream sktResponse = new DataInputStream(socket.getInputStream())
             ) {
-
                 //Sending file size to the server
                 dos.writeLong(file.length());
 

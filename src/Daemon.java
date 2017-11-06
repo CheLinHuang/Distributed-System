@@ -203,7 +203,7 @@ public class Daemon {
                             // for the case that the neighbor is also failed subsequently
                             // returnMsg will be null
                             if (returnMsg != null && returnMsg.equals("Ready to receive")) {
-                                threads.add(FilesOP.sendFile(new File("../SDFS/" + file), file, socket));
+                                threads.add(FilesOP.sendFile(new File("../SDFS/" + file), socket));
                                 threads.get(threads.size() - 1).start();
                             }
                         } catch (IOException e) {
@@ -428,21 +428,18 @@ public class Daemon {
                         writeLog(cmd, "");
                         userCommand.putFile(cmdParts);
                         break;
-                    case "get": {
+                    case "get":
                         writeLog(cmd, "");
                         userCommand.getFile(cmdParts);
                         break;
-                    }
-                    case "delete": {
+                    case "delete":
                         writeLog(cmd, "");
                         userCommand.deleteFile(cmdParts);
                         break;
-                    }
-                    case "ls": {
+                    case "ls":
                         writeLog(cmd, "");
                         userCommand.listFile(cmdParts);
                         break;
-                    }
                     case "store":
                         writeLog(cmd, "");
                         System.out.println("SDFS files stored at this node are: ");
