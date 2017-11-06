@@ -8,8 +8,6 @@ public class FileServer extends Thread {
 
         try (ServerSocket serverSocket = new ServerSocket(Daemon.filePortNumber)) {
 
-            System.out.println("SeverSocket created. Port: " + Daemon.filePortNumber);
-
             while (listening)
                 new FileServerThread(serverSocket.accept()).start();
 
