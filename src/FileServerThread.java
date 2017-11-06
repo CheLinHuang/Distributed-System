@@ -83,20 +83,6 @@ public class FileServerThread extends Thread {
                         index--;
                     }
 
-                    /*
-                    for (Socket replicaSocket: replicaSockets) {
-                        // socket closed
-                        DataInputStream response = new DataInputStream(replicaSocket.getInputStream());
-                        String res = response.readUTF();
-                        if (res.equals("Received")) {
-                            count ++;
-                            if (count > numOfReplica / 2) {
-                                out.writeUTF("Done");
-                                break;
-                            }
-                        }
-                    }*/
-
                     for (Thread t : threads)
                         if (t != null) {
                             t.join();
