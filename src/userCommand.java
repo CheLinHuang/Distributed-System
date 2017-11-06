@@ -25,8 +25,6 @@ public class userCommand {
             System.out.println("Local file not exist!");
         } else {
             try {
-
-
                 Socket socket = new Socket(fileServer, Daemon.filePortNumber);
                 DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
                 DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -60,13 +58,13 @@ public class userCommand {
                             switch (cmd) {
                                 case "y":
                                     dos.writeUTF("Y");
-                                    Daemon.writeLog("put within 1 min", tgtFileName);
+                                    Daemon.writeLog("Force put within 1 min", tgtFileName);
                                     t = FilesOP.sendFile(file, tgtFileName, socket);
                                     repeat = false;
                                     break;
                                 case "n":
                                     dos.writeUTF("N");
-                                    Daemon.writeLog("Not put within 1 min", tgtFileName);
+                                    Daemon.writeLog("Reject put within 1 min", tgtFileName);
                                     repeat = false;
                                     // do nothing
                                     break;
@@ -84,6 +82,7 @@ public class userCommand {
                     t.start();
                     t.join();
                 }
+                Daemon.writeLog("put complete", tgtFileName);
                 socket.close();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -164,7 +163,8 @@ public class userCommand {
                     fileSize -= bytes;
                 }
                 fileOutputStream.close();
-
+                out.writeUTF("Received");
+                Daemon.writeLog("get complete", sdfsfilename);
             } else {
                 System.out.println("File not exist!");
             }

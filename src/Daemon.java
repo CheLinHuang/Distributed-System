@@ -453,8 +453,8 @@ public class Daemon {
                         break;
                     default:
                         System.out.println("Unsupported command!");
-                        displayPrompt();
                 }
+                displayPrompt();
             }
 
         } catch (IOException e) {
