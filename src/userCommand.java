@@ -5,6 +5,8 @@ public class userCommand {
 
     public static void putFile(String[] cmdParts) {
 
+        long requestTime = System.currentTimeMillis();
+
         if (cmdParts.length != 3) {
             System.out.println("Unsupported command format!");
             System.out.println("To put a file into the SDFS");
@@ -30,14 +32,14 @@ public class userCommand {
                 dos.writeUTF(tgtFileName);
                 String response = in.readUTF();
                 Daemon.writeLog("Server response", response);
+
                 Thread t = null;
-
                 if (response.equals("Accept")) {
-
                     t = FilesOP.sendFile(file, tgtFileName, socket);
-
                 } else if (response.equals("Confirm")) {
+                    long responseTime = System.currentTimeMillis();
 
+                    System.out.println("Time to detect conflict " + (responseTime - requestTime));
                     System.out.println("Are you sure to send the file? (y/n)");
                     BufferedReader StdIn = new BufferedReader(new InputStreamReader(System.in));
 
@@ -56,13 +58,13 @@ public class userCommand {
                             switch (cmd) {
                                 case "y":
                                     dos.writeUTF("Y");
-                                    Daemon.writeLog("put within 1 min", tgtFileName);
+                                    Daemon.writeLog("Force put within 1 min", tgtFileName);
                                     t = FilesOP.sendFile(file, tgtFileName, socket);
                                     repeat = false;
                                     break;
                                 case "n":
                                     dos.writeUTF("N");
-                                    Daemon.writeLog("Not put within 1 min", tgtFileName);
+                                    Daemon.writeLog("Reject put within 1 min", tgtFileName);
                                     repeat = false;
                                     // do nothing
                                     break;
@@ -80,9 +82,8 @@ public class userCommand {
                     t.start();
                     t.join();
                 }
-                System.out.println("Put file successfully");
+                Daemon.writeLog("put complete", tgtFileName);
                 socket.close();
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -163,7 +164,7 @@ public class userCommand {
                 }
                 fileOutputStream.close();
                 out.writeUTF("Received");
-
+                Daemon.writeLog("get complete", sdfsfilename);
             } else {
                 System.out.println("File not exist!");
             }

@@ -62,20 +62,16 @@ public class FileServerThread extends Thread {
                     fileOutputStream.close();
 
                     File file = new File("../SDFS/" + sdfsfilename);
-                    count ++;
+                    count++;
                     Daemon.writeLog("receive file size", Long.toString(file.length()));
 
                     // TODO send replica
                     int index = Daemon.neighbors.size() - 1;
-                    //ExecutorService mPool = Executors.newFixedThreadPool(2);
-                    List<Socket> replicaSockets = new ArrayList<>();
                     Thread[] threads = new Thread[2];
-                    //boolean[][] isDone = {{false}, {false}};
 
                     for (int i = 0; index >= 0 && i < 2; i++) {
                         Socket replicaSocket = new Socket(Daemon.neighbors.get(index).split("#")[1], Daemon.filePortNumber);
                         DataOutputStream outPrint = new DataOutputStream(replicaSocket.getOutputStream());
-                        replicaSockets.add(replicaSocket);
                         outPrint.writeUTF("replica");
                         outPrint.writeUTF(sdfsfilename);
                         threads[i] = FilesOP.sendFile(file, "../SDFS/" + sdfsfilename, replicaSocket);
@@ -92,7 +88,6 @@ public class FileServerThread extends Thread {
                                 out.writeUTF("Received");
                             }
                         }
-
 
                     break;
                 }
@@ -162,6 +157,7 @@ public class FileServerThread extends Thread {
                         t.start();
                         t.join();
                     }
+                    Daemon.writeLog("get complete", sdfsfilename);
                     break;
                 }
                 case "delete": {

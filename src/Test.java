@@ -23,7 +23,6 @@ public class Test {
         int a = 5/2;
         System.out.println(a);
         String QQ = "ABC";
-        System.out.println("the File name is s" % (QQ));
 
     }
 }
