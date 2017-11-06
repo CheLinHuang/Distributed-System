@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.List;
 
 public class FileServerThread extends Thread {
@@ -29,6 +30,15 @@ public class FileServerThread extends Thread {
                     // Read filename from clientData.readUTF()
                     String sdfsfilename = clientData.readUTF();
                     Daemon.writeLog(sdfsfilename, "");
+
+                    SocketAddress socketAddress = socket.getRemoteSocketAddress();
+                    FileServer.putQueue.add(socketAddress);
+
+                    while (!(FileServer.lock.tryLock() && FileServer.putQueue.peek() == socketAddress)) {
+                        if (FileServer.lock.isHeldByCurrentThread()) {
+                            FileServer.lock.unlock();
+                        }
+                    }
 
                     // Open the file in SDFS
                     File sdfsfile = new File("../SDFS/" + sdfsfilename);
@@ -86,6 +96,9 @@ public class FileServerThread extends Thread {
                                 out.writeUTF("Received");
                             }
                         }
+
+                    FileServer.putQueue.poll();
+                    FileServer.lock.unlock();
                     break;
                 }
                 case "replica": {
@@ -202,7 +215,7 @@ public class FileServerThread extends Thread {
                     }
 
                     // query the file on the neighbors of the coordinator
-                    int j = Daemon.neighbors.size() - 1 ;
+                    int j = Daemon.neighbors.size() - 1;
                     while (j >= 0) {
                         String tgtNode = Daemon.neighbors.get(j--).split("#")[1];
                         try {
@@ -227,7 +240,7 @@ public class FileServerThread extends Thread {
                     if (queryResult.isEmpty()) {
                         out.writeUTF("Empty");
                     } else {
-                        queryResult = queryResult.substring(0, queryResult.length()-1);
+                        queryResult = queryResult.substring(0, queryResult.length() - 1);
                         out.writeUTF(queryResult);
                     }
                     break;
