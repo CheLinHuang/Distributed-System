@@ -111,9 +111,6 @@ public class FileServerThread extends Thread {
                     File file = new File("../SDFS/" + sdfsfilename);
                     out.writeUTF("Received");
                     Daemon.writeLog("receive file size", Long.toString(file.length()));
-                    System.out.println("Replica File received");
-                    System.out.println("Replica File name:" + sdfsfilename);
-
                     break;
                 }
                 case "fail replica": {
@@ -176,8 +173,6 @@ public class FileServerThread extends Thread {
                         replicaSocket.close();
                         index--;
                     }
-
-                    //out.writeUTF("Delete Success");
                     break;
                 }
                 case "delete replica": {

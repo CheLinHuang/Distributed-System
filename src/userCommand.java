@@ -164,6 +164,7 @@ public class userCommand {
                 }
                 fileOutputStream.close();
                 out.writeUTF("Received");
+                System.out.println("get the file successfully");
                 Daemon.writeLog("get complete", sdfsfilename);
             } else {
                 System.out.println("File not exist!");

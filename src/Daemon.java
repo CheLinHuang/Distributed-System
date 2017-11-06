@@ -123,10 +123,11 @@ public class Daemon {
                 }
 
                 // for debugging
+                /*
                 System.out.println("print neighbors......");
                 for (String neighbor : neighbors) {
                     System.out.println(neighbor);
-                }
+                }*/
 
                 // Update timestamp for non-neighbor
                 for (String neighbor : neighbors) {
@@ -142,7 +143,6 @@ public class Daemon {
 
         if (isNewNode) {
             // For newly-added node, it is possible that
-            System.out.println("New added node!");
             int j = neighbors.size() - 1;
             while (j >= Math.max(0, neighbors.size() - 2)) {
                 String tgtHostName = neighbors.get(j--).split("#")[1];
@@ -168,9 +168,9 @@ public class Daemon {
                             fileOutputStream.write(buffer, 0, bytes);
                             fileSize -= bytes;
                         }
-                        fileOutputStream.flush();
                         fileOutputStream.close();
                         out.writeUTF("Received");
+                        System.out.println("Re-replication: receive " + sdfsFileName + " from " + tgtHostName);
                     }
 
                 } catch (IOException e) {
@@ -184,13 +184,10 @@ public class Daemon {
             for (int i = 0; i < fileList.size(); i++) {
                 String file = fileList.get(i);
                 String targetID = Hash.getServer(Hash.hashing(file, 8));
-                System.out.println("Do replication transfer!");
-                System.out.println("The targetNode for " + file + " is: " + targetID);
 
                 if (targetID.equals(ID)) {
-
+                    System.out.println("Re-replication: send " + file + " to successors");
                     // replicate the file to the two successors
-                    System.out.println("Send Replica");
                     List<Thread> threads = new ArrayList<>();
                     int j = neighbors.size() - 1;
                     while (j >= Math.max(0, neighbors.size() - 2)) {
@@ -234,9 +231,8 @@ public class Daemon {
                         j++;
                     }
                     if (delete) {
-                        System.out.println("Delete replica...");
                         if (FilesOP.deleteFile("../SDFS/" + file)) {
-                            System.out.println(file + "is successfully deleted!");
+                            System.out.println("Re-replication: delete " + file);
                         }
                     }
                 }
@@ -399,6 +395,7 @@ public class Daemon {
                             mPool.execute(new HeartbeatThread(100));
                             mPool.execute(new MonitorThread());
                         }
+                        System.out.println("join successfully");
                         break;
 
                     case "member":
@@ -415,7 +412,7 @@ public class Daemon {
                         break;
 
                     case "id":
-                        System.out.println(ID);
+                        System.out.println("ID: " + ID);
                         break;
 
                     case "leave":
@@ -448,13 +445,15 @@ public class Daemon {
                     }
                     case "store":
                         writeLog(cmd, "");
+                        System.out.println("SDFS files stored at this node are: ");
                         for (String s : FilesOP.listFiles("../SDFS/"))
                             System.out.println(s);
+                        System.out.println("===============================");
                         break;
                     default:
                         System.out.println("Unsupported command!");
+                        displayPrompt();
                 }
-                displayPrompt();
             }
 
         } catch (IOException e) {

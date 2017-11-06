@@ -5,11 +5,6 @@ import java.util.List;
 
 public class FilesOP {
 
-    public static void main(String[] args) {
-        listFiles("fnm");
-        System.out.println(deleteFile("SDFS"));
-    }
-
     public static List<String> listFiles(String dirName) {
 
         List<String> result = new ArrayList<>();
@@ -40,7 +35,6 @@ public class FilesOP {
 
     public static Thread sendFile(File file, String fileName, Socket socket) {
 
-        System.out.println("Called File Thread");
         return new SendFileThread(file, socket, fileName);
     }
 
@@ -59,8 +53,6 @@ public class FilesOP {
         public void run() {
 
             byte[] buffer = new byte[4096];
-            System.out.println("File size: " + file.length());
-
             //Send file
             try (
                     DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
@@ -79,7 +71,7 @@ public class FilesOP {
                 // wait for the server to response
                 String res = sktResponse.readUTF();
                 if (res.equals("Received")) {
-                    System.out.println("Send the file successfully");
+                    System.out.println("Put the file successfully");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
