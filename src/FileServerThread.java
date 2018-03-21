@@ -37,6 +37,7 @@ public class FileServerThread extends Thread {
                     while (!(FileServer.lock.tryLock() && FileServer.putQueue.peek() == socketAddress)) {
                         if (FileServer.lock.isHeldByCurrentThread()) {
                             FileServer.lock.unlock();
+                            Thread.sleep(50);
                         }
                     }
 
@@ -47,8 +48,11 @@ public class FileServerThread extends Thread {
                         // Require confirmation to put file
                         out.writeUTF("Confirm");
                         String clientConfirmation = clientData.readUTF();
-                        if (clientConfirmation.equals("N"))
+                        if (clientConfirmation.equals("N")) {
+                            FileServer.putQueue.poll();
+                            FileServer.lock.unlock();
                             break;
+                        }
                     } else {
                         out.writeUTF("Accept");
                     }
@@ -96,7 +100,6 @@ public class FileServerThread extends Thread {
                                 out.writeUTF("Received");
                             }
                         }
-
                     FileServer.putQueue.poll();
                     FileServer.lock.unlock();
                     break;
@@ -233,8 +236,8 @@ public class FileServerThread extends Thread {
                                 queryResult += result + "#";
                             }
 
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                        } catch (Exception e) {
+                            //e.printStackTrace();
                         }
                     }
                     if (queryResult.isEmpty()) {
@@ -278,6 +281,9 @@ public class FileServerThread extends Thread {
 
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            if (FileServer.lock.isHeldByCurrentThread())
+                FileServer.lock.unlock();
         }
     }
 }
